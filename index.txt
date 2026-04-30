@@ -113,7 +113,7 @@
 
 <script>
     // --- CONFIGURATION: PASTE YOUR GOOGLE WEB APP URL BELOW ---
-    const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbykSrxNddy0yIFckUDs2q65ZMOFXk6-nEjSg6Sf7vZ6dVt86kqs9q-dNZ-9zSJ7gkLI/exec';
 
     function updateUI() {
         const type = document.getElementById('inf_type').value;
