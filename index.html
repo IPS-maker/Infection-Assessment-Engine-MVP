@@ -1,115 +1,2050 @@
-# ==========================================
-# Create one folder per customer under 02_Clients
-# ==========================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>McGeer Criteria + HARM Scoring — Infection Surveillance Assessment Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#F5F6F8; --card:#FFF; --border:#DFE3EA; --text:#1A1D23; --muted:#6B7280; --light:#9CA3AF;
+  --primary:#0C5C4C; --primary-light:#E6F3EF; --primary-dark:#083D33;
+  --uti:#6D28D9; --uti-bg:#F5F3FF; --uti-bdr:#DDD6FE;
+  --rti:#0369A1; --rti-bg:#EFF6FF; --rti-bdr:#BFDBFE;
+  --ssti:#B45309; --ssti-bg:#FFFBEB; --ssti-bdr:#FDE68A;
+  --giti:#166534; --giti-bg:#F0FDF4; --giti-bdr:#BBF7D0;
+  --other:#6B7280; --other-bg:#F9FAFB; --other-bdr:#D1D5DB;
+  --const:#7F1D1D; --const-bg:#FEF2F2; --const-bdr:#FECACA;
+  --met:#059669; --met-bg:#ECFDF5; --notmet:#DC2626; --notmet-bg:#FEF2F2;
+  --radius:10px; --shadow:0 1px 3px rgba(0,0,0,0.05);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.55}
+h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:700}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:13px}
 
-# Set this to your real root
-$OneDriveRoot = "C:\Users\LyndonForrest\OneDrive - Bug Control"
+/* ═══ HEADER ═══ */
+.header{background:linear-gradient(135deg,#083D33 0%,#0C5C4C 50%,#0E7A66 100%);padding:18px 16px 0;color:#FFF;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.15)}
+.hdr-inner{max-width:960px;margin:0 auto}
+.hdr-top{display:flex;align-items:center;gap:10px;padding-bottom:12px}
+.hdr-icon{width:38px;height:38px;border-radius:9px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;font-size:20px}
+.header h1{font-size:17px;letter-spacing:-0.3px}
+.header .sub{font-size:10px;opacity:0.65;margin-top:2px;font-family:'DM Sans',sans-serif;font-weight:400}
+.tabs{display:flex;gap:3px}
+.tab{padding:8px 14px;border-radius:8px 8px 0 0;border:none;font-size:11.5px;font-weight:600;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.6);transition:all 0.2s}
+.tab:hover{background:rgba(255,255,255,0.14);color:#FFF}
+.tab.active{background:var(--bg);color:var(--text)}
 
-# Safety check
-Write-Host "Using OneDrive root:" $OneDriveRoot -ForegroundColor Cyan
-if (-not (Test-Path $OneDriveRoot)) {
-    Write-Host "ERROR: Path does not exist. Fix `$OneDriveRoot and try again." -ForegroundColor Red
-    exit
+/* ═══ LAYOUT ═══ */
+.main{max-width:960px;margin:0 auto;padding:18px 14px 60px}
+.vp{display:none}.vp.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card-title{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* ═══ FORMS ═══ */
+.form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.form-group{flex:1;min-width:160px}
+.form-group label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
+.form-group input,.form-group select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:#FAFBFC;transition:border 0.2s}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--primary);background:#FFF}
+
+/* ═══ CATEGORY SELECTOR ═══ */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:16px}
+.cat-btn{padding:12px;border-radius:9px;border:2px solid var(--border);background:var(--card);text-align:left;transition:all 0.2s}
+.cat-btn:hover{border-color:var(--primary);transform:translateY(-1px)}
+.cat-btn.selected{border-width:2px;transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.cat-btn .cat-icon{font-size:22px;margin-bottom:4px}
+.cat-btn .cat-label{font-size:13px;font-weight:700}
+.cat-btn .cat-sub{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* ═══ SUB-TYPE SELECTOR ═══ */
+.subtype-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.subtype-btn{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);font-size:12px;font-weight:600;transition:all 0.15s}
+.subtype-btn:hover{background:#F0F0F4}
+.subtype-btn.active{color:#FFF}
+
+/* ═══ CRITERIA SECTION ═══ */
+.criteria-section{margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.criteria-header{padding:10px 14px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+.criteria-body{padding:12px 14px}
+.criteria-rule{font-size:11px;color:var(--muted);margin-bottom:10px;padding:6px 10px;background:#F8F9FA;border-radius:6px;border-left:3px solid var(--primary)}
+.check-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #F3F4F6}
+.check-item:last-child{border-bottom:none}
+.check-item input[type="checkbox"]{margin-top:3px;width:16px;height:16px;accent-color:var(--primary);flex-shrink:0}
+.check-item label{font-size:13px;line-height:1.5;cursor:pointer}
+.check-item.checked label{color:var(--met);font-weight:500}
+.subgroup{margin:8px 0 8px 20px;padding:8px 12px;border-radius:7px;background:#FAFBFC;border:1px solid #EEF0F4}
+.subgroup-title{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px}
+
+/* ═══ COMMENT BOX ═══ */
+.comment-box{margin-top:8px;padding:6px 10px;border-radius:6px;background:#FAFBFC;border:1px solid #E8EBF0;font-size:11.5px;color:var(--muted);line-height:1.5;font-style:italic}
+
+/* ═══ RESULT BANNER ═══ */
+.result-banner{padding:14px 16px;border-radius:var(--radius);margin:16px 0;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px}
+.result-banner.met{background:var(--met-bg);color:var(--met);border:1px solid #A7F3D0}
+.result-banner.notmet{background:var(--notmet-bg);color:var(--notmet);border:1px solid #FECACA}
+.result-banner.pending{background:#FFFBEB;color:#92400E;border:1px solid #FDE68A}
+
+/* ═══ BUTTONS ═══ */
+.btn{padding:9px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;transition:all 0.15s}
+.btn-primary{background:var(--primary);color:#FFF}.btn-primary:hover{background:var(--primary-dark)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{background:#F0F0F4}
+.btn-danger{background:#FEF2F2;color:#DC2626;border:1px solid #FECACA}.btn-danger:hover{background:#FEE2E2}
+.btn-sm{padding:6px 12px;font-size:11px}
+.btn-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+
+/* ═══ ASSESSMENT LOG ═══ */
+.log-item{padding:12px 14px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card)}
+.log-item .li-left{flex:1}
+.log-item .li-name{font-weight:700;font-size:13px}
+.log-item .li-detail{font-size:11px;color:var(--muted);margin-top:2px}
+.log-badge{padding:4px 10px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+.log-badge.met{background:var(--met-bg);color:var(--met)}
+.log-badge.notmet{background:var(--notmet-bg);color:var(--notmet)}
+
+/* ═══ LOCATION SYNC BANNER ═══ */
+.sync-banner{padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sync-banner.ok{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0}
+.sync-banner.fallback{background:#FFFBEB;color:#92400E;border:1px solid #FDE68A}
+
+/* ═══ GUIDE ═══ */
+.guide-cat{margin-bottom:16px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.guide-cat-header{padding:12px 16px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.guide-cat-body{padding:0 16px 14px}
+.guide-syndrome{margin-bottom:10px;padding:10px;border-radius:7px;background:#FAFBFC;border:1px solid #EEF0F4}
+.guide-syndrome h4{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;margin-bottom:4px}
+.guide-syndrome p,.guide-syndrome li{font-size:12px;color:#374151;line-height:1.6}
+.guide-syndrome ul{margin:4px 0 4px 16px}
+
+/* ═══ LOCATION SETUP ═══ */
+.loc-building{margin-bottom:10px;padding:10px 12px;border-radius:8px;background:#FFF;border:1px solid var(--border)}
+.loc-floor{margin-left:16px;margin-bottom:6px;padding:6px 10px;border-radius:6px;background:#FAFBFC;border:1px solid #F1F5F9}
+.loc-unit-row{display:flex;gap:6px;align-items:center;margin-bottom:3px;margin-left:14px;font-size:12px}
+.loc-label{font-size:12px;font-weight:600;margin-bottom:4px}
+
+/* ═══ SEVERITY / HARM SCORING ═══ */
+.severity-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.severity-card.has-harm{border-color:var(--primary)}
+.severity-intro{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;padding:8px 12px;background:#FAFBFC;border-radius:7px;border-left:3px solid var(--primary)}
+.harm-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px}
+.harm-option{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:2px solid var(--border);border-radius:9px;cursor:pointer;background:#FFF;transition:all 0.15s}
+.harm-option:hover{background:#FAFBFC;border-color:var(--light)}
+.harm-option.selected{box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+.harm-radio{width:18px;height:18px;border:2px solid var(--border);border-radius:50%;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;background:#FFF}
+.harm-option.selected .harm-radio{border-color:currentColor}
+.harm-option.selected .harm-radio::after{content:'';width:8px;height:8px;border-radius:50%;background:currentColor}
+.harm-content{flex:1}
+.harm-label{font-size:13px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.harm-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:0.4px}
+.harm-tag.escalate{background:var(--notmet-bg);color:var(--notmet);border:1px solid #FECACA}
+.harm-desc{font-size:11.5px;color:var(--muted);line-height:1.45}
+.harm-action{font-size:10.5px;font-weight:600;margin-top:4px;font-style:italic}
+
+/* HARM colour variants */
+.harm-option.hs1{color:#7F1D1D}.harm-option.hs1.selected{background:#FEF2F2;border-color:#7F1D1D}
+.harm-option.hs2{color:#C2410C}.harm-option.hs2.selected{background:#FFF7ED;border-color:#C2410C}
+.harm-option.hs3{color:#B45309}.harm-option.hs3.selected{background:#FFFBEB;border-color:#B45309}
+.harm-option.hs4{color:#0369A1}.harm-option.hs4.selected{background:#EFF6FF;border-color:#0369A1}
+.harm-option.hs5{color:#166534}.harm-option.hs5.selected{background:#F0FDF4;border-color:#166534}
+
+/* HARM badges (used in log) */
+.harm-badge{padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid}
+.harm-badge.hs1{background:#FEF2F2;color:#7F1D1D;border-color:#FECACA}
+.harm-badge.hs2{background:#FFF7ED;color:#C2410C;border-color:#FED7AA}
+.harm-badge.hs3{background:#FFFBEB;color:#B45309;border-color:#FDE68A}
+.harm-badge.hs4{background:#EFF6FF;color:#0369A1;border-color:#BFDBFE}
+.harm-badge.hs5{background:#F0FDF4;color:#166534;border-color:#BBF7D0}
+
+/* Severity supporting fields */
+.sev-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.sev-field{padding:10px 12px;background:#FAFBFC;border:1px solid var(--border);border-radius:8px}
+.sev-field-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;display:block}
+.sev-yn{display:flex;gap:6px}
+.sev-yn-btn{flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#FFF;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.sev-yn-btn:hover{background:#F0F0F4}
+.sev-yn-btn.active.yes{background:var(--met);color:#FFF;border-color:var(--met)}
+.sev-yn-btn.active.no{background:var(--notmet);color:#FFF;border-color:var(--notmet)}
+.sev-select{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#FFF}
+.sev-textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#FFF;resize:vertical;font-family:inherit}
+.notif-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.notif-chip{padding:5px 11px;border:1px solid var(--border);border-radius:14px;font-size:11px;font-weight:600;background:#FFF;cursor:pointer;transition:all 0.15s;color:var(--text)}
+.notif-chip:hover{background:#F0F0F4}
+.notif-chip.active{background:var(--primary);color:#FFF;border-color:var(--primary)}
+
+/* Escalation banner */
+.escalation-banner{padding:14px 16px;border-radius:var(--radius);margin:14px 0;border:2px solid #FECACA;background:linear-gradient(135deg,#FEF2F2 0%,#FFF7ED 100%);display:flex;align-items:flex-start;gap:12px}
+.escalation-icon{font-size:24px;flex-shrink:0}
+.escalation-text{flex:1}
+.escalation-title{font-size:14px;font-weight:700;color:#7F1D1D;margin-bottom:4px}
+.escalation-body{font-size:12px;color:#92400E;line-height:1.5}
+
+/* Incident Summary */
+.incident-summary{margin-top:14px;border:2px solid #FECACA;border-radius:var(--radius);overflow:hidden;background:#FFF}
+.incident-header{padding:12px 16px;background:linear-gradient(135deg,#7F1D1D 0%,#C2410C 100%);color:#FFF}
+.incident-header .ih-title{font-size:14px;font-weight:700;letter-spacing:0.3px}
+.incident-header .ih-ref{font-size:11px;opacity:0.9;margin-top:2px;font-family:'Courier New',monospace}
+.incident-body{padding:14px 16px}
+.incident-row{display:flex;padding:6px 0;border-bottom:1px solid #F3F4F6;font-size:12px}
+.incident-row:last-child{border-bottom:none}
+.incident-row .ir-label{font-weight:700;color:var(--muted);min-width:160px;text-transform:uppercase;font-size:10.5px;letter-spacing:0.4px;padding-top:2px}
+.incident-row .ir-value{flex:1;line-height:1.5}
+.incident-actions{padding:12px 16px;background:#FAFBFC;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap}
+
+/* Save bar (gated by validation) */
+.save-validation{padding:8px 14px;border-radius:7px;background:#FFFBEB;border:1px solid #FDE68A;font-size:12px;color:#92400E;margin-bottom:8px;display:none}
+.save-validation.visible{display:block}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:600px){
+  .form-row{flex-direction:column}
+  .form-group{min-width:100%}
+  .cat-grid{grid-template-columns:1fr 1fr}
+  .header h1{font-size:15px}
+  .sev-fields{grid-template-columns:1fr}
+  .incident-row{flex-direction:column;gap:2px}
+  .incident-row .ir-label{min-width:auto}
 }
 
-$clientsRoot = Join-Path $OneDriveRoot "02_Clients"
+/* ═══ PRINT ═══ */
+@media print{
+  .header{position:static;background:#0C5C4C!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tabs,.btn-row,.cat-grid{break-inside:avoid}
+  .no-print{display:none!important}
+  .incident-summary{break-inside:avoid;page-break-inside:avoid}
+  .incident-header{background:#7F1D1D!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#FFF!important}
+  .severity-card{break-inside:avoid}
+  .escalation-banner{break-inside:avoid}
+  body.print-incident-only > .header,
+  body.print-incident-only #tab-assess > *:not(#severitySection),
+  body.print-incident-only #syncBanner,
+  body.print-incident-only [data-printable="exclude"]{display:none!important}
+  body.print-incident-only #severitySection .severity-card,
+  body.print-incident-only #severitySection .escalation-banner{display:none!important}
+}
+</style>
+</head>
+<body>
 
-if (-not (Test-Path $clientsRoot)) {
-    New-Item -Path $clientsRoot -ItemType Directory -Force | Out-Null
-    Write-Host "Created 02_Clients at: $clientsRoot"
+<!-- ═══════════════════════════════════════════════════════
+     HEADER & NAVIGATION
+     ═══════════════════════════════════════════════════════ -->
+<div class="header">
+  <div class="hdr-inner">
+    <div class="hdr-top">
+      <div class="hdr-icon">🔬</div>
+      <div>
+        <h1>McGeer Criteria + HARM Scoring — Infection Surveillance Tool</h1>
+        <div class="sub">Revised McGeer Criteria (Stone et al., 2012 — SHEA/APIC) · Surveillance + Severity Grading + Incident Escalation</div>
+      </div>
+    </div>
+    <div class="tabs" id="mainTabs">
+      <button class="tab active" onclick="switchTab('assess')">📋 Assess</button>
+      <button class="tab" onclick="switchTab('log')">📑 Log</button>
+      <button class="tab" onclick="switchTab('guide')">📖 Guide</button>
+      <button class="tab" onclick="switchTab('locations')">📍 Locations</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════════════════
+     TAB: ASSESS INFECTION
+     ═══════════════════════════════════════════════════════ -->
+<div id="tab-assess" class="vp active">
+
+  <!-- Location Sync Status -->
+  <div id="syncBanner"></div>
+
+  <!-- Resident Details -->
+  <div class="card">
+    <div class="card-title">👤 Resident & Episode Details</div>
+    <div class="form-row">
+      <div class="form-group"><label>Resident Name / ID</label><input type="text" id="resName" placeholder="e.g. Smith, J — #1042"></div>
+      <div class="form-group"><label>Room / Bed</label><input type="text" id="resRoom" placeholder="e.g. Room 12B"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Location (Unit)</label><select id="resLocation"><option value="">— Select unit —</option></select></div>
+      <div class="form-group"><label>Assessment Date</label><input type="date" id="resDate"></div>
+      <div class="form-group"><label>Assessor</label><input type="text" id="resAssessor" placeholder="e.g. RN Jane Doe"></div>
+    </div>
+  </div>
+
+  <!-- Guiding Principles -->
+  <div style="padding:10px 14px;border-radius:8px;background:#FFFBEB;border:1px solid #FDE68A;margin-bottom:14px;font-size:12px;color:#92400E;line-height:1.6">
+    <strong>⚠️ Guiding Principles:</strong> (1) All symptoms must be <strong>new or acutely worsened</strong> from baseline. (2) <strong>Rule out non-infectious causes</strong> before classifying. (3) Consider the full clinical picture — signs, microbiology, and radiology together.
+  </div>
+
+  <!-- Constitutional Criteria (Table 1) -->
+  <div class="card" id="constitutionalCard">
+    <div class="card-title" style="color:var(--const)">🌡️ Constitutional Criteria (Table 1 — apply to all categories)</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">These systemic indicators are referenced by multiple infection definitions below. Check all that apply to this resident's current episode.</p>
+    <div id="constChecks"></div>
+  </div>
+
+  <!-- Category Selector -->
+  <div class="card">
+    <div class="card-title">🔍 Select Infection Category to Evaluate</div>
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+
+  <!-- Assessment Workspace -->
+  <div id="assessWorkspace"></div>
+
+  <!-- Severity / HARM Scoring -->
+  <div id="severitySection"></div>
+
+  <!-- Action Buttons -->
+  <div class="btn-row no-print" id="assessActions" style="display:none">
+    <div id="saveValidation" class="save-validation"></div>
+    <button class="btn btn-primary" onclick="saveAssessment()">💾 Save Assessment</button>
+    <button class="btn btn-outline" onclick="resetAssessment()">🔄 Reset Form</button>
+    <button class="btn btn-outline" onclick="window.print()">🖨️ Print</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TAB: ASSESSMENT LOG
+     ═══════════════════════════════════════════════════════ -->
+<div id="tab-log" class="vp">
+  <div class="card">
+    <div class="card-title">📑 Saved Assessments</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">All completed assessments are stored in this browser. Export or clear as needed.</p>
+    <div class="btn-row" style="margin-bottom:14px">
+      <button class="btn btn-outline btn-sm" onclick="exportLog()">📥 Export CSV</button>
+      <button class="btn btn-danger btn-sm" onclick="clearLog()">🗑️ Clear All</button>
+    </div>
+    <div id="logList"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TAB: CRITERIA GUIDE
+     ═══════════════════════════════════════════════════════ -->
+<div id="tab-guide" class="vp">
+  <div class="card">
+    <div class="card-title">📖 Quick Reference — Revised McGeer Criteria (2012)</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Reference: Stone ND, et al. <em>Infect Control Hosp Epidemiol</em> 2012;33:965-77. This guide summarises the criteria built into the assessment tool.</p>
+    <div id="guideContent"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TAB: LOCATIONS
+     ═══════════════════════════════════════════════════════ -->
+<div id="tab-locations" class="vp">
+  <div class="card">
+    <div class="card-title">📍 Location Setup (Fallback)</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">If the IPC Dashboard is on the same domain, locations sync automatically. Otherwise, add your facility units here.</p>
+    <div id="locSetup"></div>
+    <div class="btn-row">
+      <button class="btn btn-outline btn-sm" onclick="addFallbackUnit()">+ Add Unit</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   DATA MODEL — CONSTITUTIONAL CRITERIA (Table 1)
+   ═══════════════════════════════════════════════════════════════ */
+const CONSTITUTIONAL = [
+  { id:'fever', label:'Fever', items:[
+    {id:'f1',text:'Single oral temp >37.8°C (>100°F)'},
+    {id:'f2',text:'Repeated oral temp >37.2°C (99°F) or rectal >37.5°C (99.5°F)'},
+    {id:'f3',text:'Single temp >1.1°C (2°F) above baseline from any site'},
+  ], rule:'ANY one = Fever present', logic:'any'},
+  { id:'leukocytosis', label:'Leukocytosis', items:[
+    {id:'l1',text:'WBC >14,000/mm³'},
+    {id:'l2',text:'>6% bands or ≥1,500 bands/mm³'},
+  ], rule:'ANY one = Leukocytosis present', logic:'any'},
+  { id:'mentalStatus', label:'Acute Mental Status Change (CAM)', items:[
+    {id:'m1',text:'Acute onset'},
+    {id:'m2',text:'Fluctuating course'},
+    {id:'m3',text:'Inattention'},
+    {id:'m4',text:'Disorganised thinking OR altered level of consciousness'},
+  ], rule:'ALL four must be present', logic:'all'},
+  { id:'funcDecline', label:'Acute Functional Decline', items:[
+    {id:'fd1',text:'New ≥3-point increase in ADL score (7 items, 0–4 scale each, range 0–28)'},
+  ], rule:'ADL items: bed mobility, transfer, locomotion, dressing, toilet use, hygiene, eating', logic:'any'},
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   DATA MODEL — INFECTION CATEGORIES & CRITERIA
+   ═══════════════════════════════════════════════════════════════ */
+const CATEGORIES = [
+  /* ─────── UTI ─────── */
+  { id:'uti', icon:'🔬', label:'UTI', full:'Urinary Tract Infection', color:'var(--uti)', bg:'var(--uti-bg)', bdr:'var(--uti-bdr)',
+    subtypes:[
+      { id:'uti_nc', label:'Without Catheter',
+        rule:'Must fulfil BOTH 1 (Signs/Symptoms) AND 2 (Microbiology)',
+        sections:[
+          { id:'uti_nc_s1', title:'1. Signs & Symptoms — at least ONE of (a), (b), or (c)',
+            groups:[
+              { id:'uti_nc_1a', label:'(a) Localising symptoms', rule:'Any one present satisfies group (a)',
+                items:[
+                  {id:'unc1',text:'Acute dysuria'},
+                  {id:'unc2',text:'Acute pain, swelling, or tenderness of testes, epididymis, or prostate'},
+                ]},
+              { id:'uti_nc_1b', label:'(b) With fever/leukocytosis + ≥1 GU symptom', rule:'Fever OR leukocytosis PLUS at least 1 below',
+                items:[
+                  {id:'unc3',text:'Acute costovertebral angle (CVA) pain or tenderness'},
+                  {id:'unc4',text:'Suprapubic pain'},
+                  {id:'unc5',text:'Gross hematuria'},
+                  {id:'unc6',text:'New or marked increase in incontinence'},
+                  {id:'unc7',text:'New or marked increase in urgency'},
+                  {id:'unc8',text:'New or marked increase in frequency'},
+                ]},
+              { id:'uti_nc_1c', label:'(c) Without fever/leukocytosis → ≥2 GU symptoms', rule:'No fever AND no leukocytosis, PLUS at least 2 below',
+                items:[
+                  {id:'unc9',text:'Suprapubic pain'},
+                  {id:'unc10',text:'Gross hematuria'},
+                  {id:'unc11',text:'New or marked increase in incontinence'},
+                  {id:'unc12',text:'New or marked increase in urgency'},
+                  {id:'unc13',text:'New or marked increase in frequency'},
+                ]},
+            ],
+            evalFn:'evalUtiNcSigns'
+          },
+          { id:'uti_nc_s2', title:'2. Microbiology — at least ONE',
+            groups:[
+              { id:'uti_nc_2', label:'Microbiologic confirmation', rule:'At least one',
+                items:[
+                  {id:'unc14',text:'≥10⁵ CFU/mL of ≤2 species in voided urine sample'},
+                  {id:'unc15',text:'≥10² CFU/mL of any organism(s) from in-and-out catheter specimen'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Urine specimens should be processed within 1–2 hours. If delayed >30 min, refrigerate and culture within 24 h. Pyuria alone does NOT distinguish symptomatic UTI from asymptomatic bacteriuria.',
+      },
+      { id:'uti_cath', label:'With Indwelling Catheter',
+        rule:'Must fulfil BOTH 1 (Signs/Symptoms) AND 2 (Microbiology)',
+        sections:[
+          { id:'uti_c_s1', title:'1. Signs & Symptoms — at least ONE',
+            groups:[
+              { id:'uti_c_1', label:'Sign or symptom subcriteria', rule:'At least ONE',
+                items:[
+                  {id:'uc1',text:'Fever, rigors, or new-onset hypotension — with no alternate site of infection'},
+                  {id:'uc2',text:'Acute change in mental status OR acute functional decline, with no alternate diagnosis AND leukocytosis'},
+                  {id:'uc3',text:'New-onset suprapubic pain or CVA pain/tenderness'},
+                  {id:'uc4',text:'Purulent discharge from around catheter, or acute pain/swelling/tenderness of testes, epididymis, or prostate'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'uti_c_s2', title:'2. Microbiology',
+            groups:[
+              { id:'uti_c_2', label:'Catheter specimen culture', rule:'Required',
+                items:[
+                  {id:'uc5',text:'Urinary catheter specimen culture ≥10⁵ CFU/mL of any organism(s)'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Specimens should be collected AFTER catheter replacement if current catheter in place >14 days. Recent catheter trauma, obstruction, or new-onset haematuria are useful localising signs but not required.',
+      },
+    ]
+  },
+
+  /* ─────── RTI ─────── */
+  { id:'rti', icon:'🫁', label:'RTI', full:'Respiratory Tract Infection', color:'var(--rti)', bg:'var(--rti-bg)', bdr:'var(--rti-bdr)',
+    subtypes:[
+      { id:'rti_cold', label:'Common Cold / Pharyngitis',
+        rule:'At least 2 of the following must be present',
+        sections:[
+          { id:'rti_cold_s1', title:'Signs & Symptoms — need ≥2',
+            groups:[
+              { id:'rti_cold_g', label:'Criteria', rule:'≥2 must be checked',
+                items:[
+                  {id:'rc1',text:'Runny nose or sneezing'},
+                  {id:'rc2',text:'Stuffy nose (nasal congestion)'},
+                  {id:'rc3',text:'Sore throat, hoarseness, or difficulty swallowing'},
+                  {id:'rc4',text:'Dry cough'},
+                  {id:'rc5',text:'Swollen or tender glands in neck (cervical lymphadenopathy)'},
+                ]},
+            ],
+            evalFn:'evalMin2'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Fever may or may not be present. Symptoms must be new and not attributable to allergies.',
+      },
+      { id:'rti_ili', label:'Influenza-Like Illness (ILI)',
+        rule:'Must fulfil BOTH 1 (Fever) AND 2 (≥3 symptoms)',
+        sections:[
+          { id:'rti_ili_s1', title:'1. Fever — REQUIRED',
+            groups:[
+              { id:'rti_ili_1', label:'Fever', rule:'Must be present (see constitutional criteria)',
+                items:[
+                  {id:'ri1',text:'Fever present (meets constitutional fever criteria)'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'rti_ili_s2', title:'2. At least THREE of the following',
+            groups:[
+              { id:'rti_ili_2', label:'ILI symptoms', rule:'≥3 required',
+                items:[
+                  {id:'ri2',text:'Chills'},
+                  {id:'ri3',text:'New headache or eye pain'},
+                  {id:'ri4',text:'Myalgias or body aches'},
+                  {id:'ri5',text:'Malaise or loss of appetite'},
+                  {id:'ri6',text:'Sore throat'},
+                  {id:'ri7',text:'New or increased dry cough'},
+                ]},
+            ],
+            evalFn:'evalMin3'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'If both ILI criteria AND another upper/lower RTI criteria are met, record ONLY ILI.',
+      },
+      { id:'rti_pneu', label:'Pneumonia',
+        rule:'ALL three criteria (1, 2, AND 3) must be met',
+        sections:[
+          { id:'rti_pn_s1', title:'1. Chest X-ray — REQUIRED',
+            groups:[
+              { id:'rti_pn_1', label:'Radiographic evidence', rule:'Required',
+                items:[
+                  {id:'rp1',text:'Chest X-ray showing pneumonia or a new infiltrate'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'rti_pn_s2', title:'2. Respiratory Signs/Symptoms — at least ONE',
+            groups:[
+              { id:'rti_pn_2', label:'Respiratory subcriteria', rule:'≥1 required',
+                items:[
+                  {id:'rp2',text:'New or increased cough'},
+                  {id:'rp3',text:'New or increased sputum production'},
+                  {id:'rp4',text:'O₂ sat <94% on room air or >3% decrease from baseline'},
+                  {id:'rp5',text:'New or changed lung examination abnormalities'},
+                  {id:'rp6',text:'Pleuritic chest pain'},
+                  {id:'rp7',text:'Respiratory rate ≥25 breaths/min'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'rti_pn_s3', title:'3. Constitutional Criteria — at least ONE',
+            groups:[
+              { id:'rti_pn_3', label:'Constitutional', rule:'≥1 (fever, leukocytosis, mental status change, or functional decline)',
+                items:[
+                  {id:'rp8',text:'Fever'},
+                  {id:'rp9',text:'Leukocytosis'},
+                  {id:'rp10',text:'Acute mental status change'},
+                  {id:'rp11',text:'Acute functional decline'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Exclude conditions mimicking pneumonia (e.g. congestive heart failure, interstitial lung disease).',
+      },
+      { id:'rti_lrti', label:'LRTI (Bronchitis / Tracheobronchitis)',
+        rule:'ALL three criteria (1, 2, AND 3) must be met',
+        sections:[
+          { id:'rti_lr_s1', title:'1. Chest X-ray — negative or NOT performed',
+            groups:[
+              { id:'rti_lr_1', label:'Radiography status', rule:'Required',
+                items:[
+                  {id:'rl1',text:'Chest X-ray not performed, OR negative for pneumonia / new infiltrate'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'rti_lr_s2', title:'2. Respiratory Signs/Symptoms — at least TWO',
+            groups:[
+              { id:'rti_lr_2', label:'Respiratory subcriteria', rule:'≥2 required',
+                items:[
+                  {id:'rl2',text:'New or increased cough'},
+                  {id:'rl3',text:'New or increased sputum production'},
+                  {id:'rl4',text:'O₂ sat <94% on room air or >3% decrease from baseline'},
+                  {id:'rl5',text:'New or changed lung examination abnormalities'},
+                  {id:'rl6',text:'Pleuritic chest pain'},
+                  {id:'rl7',text:'Respiratory rate ≥25 breaths/min'},
+                ]},
+            ],
+            evalFn:'evalMin2'
+          },
+          { id:'rti_lr_s3', title:'3. Constitutional Criteria — at least ONE',
+            groups:[
+              { id:'rti_lr_3', label:'Constitutional', rule:'≥1',
+                items:[
+                  {id:'rl8',text:'Fever'},
+                  {id:'rl9',text:'Leukocytosis'},
+                  {id:'rl10',text:'Acute mental status change'},
+                  {id:'rl11',text:'Acute functional decline'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Use this category when CXR is negative or not performed. Exclude mimicking conditions (e.g. CHF).',
+      },
+    ]
+  },
+
+  /* ─────── SSTI ─────── */
+  { id:'ssti', icon:'🩹', label:'SSTI', full:'Skin, Soft Tissue & Mucosal Infection', color:'var(--ssti)', bg:'var(--ssti-bg)', bdr:'var(--ssti-bdr)',
+    subtypes:[
+      { id:'ssti_wound', label:'Cellulitis / Wound',
+        rule:'At least ONE of the following pathways must be met',
+        sections:[
+          { id:'ssti_w_s1', title:'Pathway A — Pus present',
+            groups:[
+              { id:'ssti_w_1', label:'Pus', rule:'Presence of pus alone meets criteria',
+                items:[
+                  {id:'sw1',text:'Pus present at wound, skin, or soft tissue site'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'ssti_w_s2', title:'Pathway B — ≥4 inflammation signs + ≥1 constitutional criterion',
+            groups:[
+              { id:'ssti_w_2a', label:'Inflammation signs (need ≥4)', rule:'≥4 of the following new or increasing signs',
+                items:[
+                  {id:'sw2',text:'Heat (warmth) at affected site'},
+                  {id:'sw3',text:'Redness (erythema) at affected site'},
+                  {id:'sw4',text:'Swelling at affected site'},
+                  {id:'sw5',text:'Tenderness or pain at affected site'},
+                  {id:'sw6',text:'Serous drainage at affected site'},
+                ]},
+              { id:'ssti_w_2b', label:'Constitutional criterion (need ≥1)', rule:'≥1 required with pathway B',
+                items:[
+                  {id:'sw7',text:'Fever'},
+                  {id:'sw8',text:'Leukocytosis'},
+                  {id:'sw9',text:'Acute mental status change'},
+                  {id:'sw10',text:'Acute functional decline'},
+                ]},
+            ],
+            evalFn:'evalSstiPathwayB'
+          },
+        ],
+        evalFn:'evalAnySectionMet',
+        comments:'Positive superficial wound swab culture alone is NOT sufficient to establish wound infection. >1 resident with streptococcal skin infection from same serogroup may indicate outbreak.',
+      },
+      { id:'ssti_scabies', label:'Scabies',
+        rule:'Must fulfil BOTH 1 AND 2',
+        sections:[
+          { id:'ssti_sc_s1', title:'1. Rash',
+            groups:[
+              { id:'ssti_sc_1', label:'Rash', rule:'Required',
+                items:[
+                  {id:'ss1',text:'Maculopapular and/or itching rash'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'ssti_sc_s2', title:'2. Confirmation — at least ONE',
+            groups:[
+              { id:'ssti_sc_2', label:'Confirmation criteria', rule:'≥1 required',
+                items:[
+                  {id:'ss2',text:'Physician diagnosis'},
+                  {id:'ss3',text:'Laboratory confirmation (scraping or biopsy)'},
+                  {id:'ss4',text:'Epidemiologic linkage to lab-confirmed case of scabies'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Rule out rashes due to skin irritation, allergic reactions, eczema, and other non-infectious conditions. Epidemiologic linkage = geographic proximity, temporal relationship, or common exposure source.',
+      },
+      { id:'ssti_oral_candida', label:'Oral Candidiasis',
+        rule:'Must fulfil BOTH 1 AND 2',
+        sections:[
+          { id:'ssti_oc_s1', title:'1. Clinical finding',
+            groups:[
+              { id:'ssti_oc_1', label:'Finding', rule:'Required',
+                items:[
+                  {id:'soc1',text:'Raised white patches on inflamed mucosa or plaques on oral mucosa'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'ssti_oc_s2', title:'2. Diagnosis',
+            groups:[
+              { id:'ssti_oc_2', label:'Diagnosis', rule:'Required',
+                items:[
+                  {id:'soc2',text:'Medical or dental provider diagnosis'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Mucocutaneous candida infections are usually due to underlying conditions (e.g. poorly controlled diabetes, immunosuppression). Not a transmissible healthcare infection, but can be a marker for increased antibiotic exposure.',
+      },
+      { id:'ssti_fungal', label:'Fungal Skin Infection',
+        rule:'Must fulfil BOTH 1 AND 2',
+        sections:[
+          { id:'ssti_fs_s1', title:'1. Clinical presentation',
+            groups:[
+              { id:'ssti_fs_1', label:'Presentation', rule:'Required',
+                items:[
+                  {id:'sf1',text:'Characteristic rash or lesions'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'ssti_fs_s2', title:'2. Confirmation',
+            groups:[
+              { id:'ssti_fs_2', label:'Confirmation', rule:'≥1 required',
+                items:[
+                  {id:'sf2',text:'Physician diagnosis'},
+                  {id:'sf3',text:'Laboratory confirmation of fungal pathogen (skin scraping or biopsy)'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Dermatophytes can cause occasional infections and rare outbreaks in LTCFs.',
+      },
+      { id:'ssti_herpes', label:'Herpes Simplex / Zoster',
+        rule:'Must fulfil BOTH 1 AND 2',
+        sections:[
+          { id:'ssti_hz_s1', title:'1. Rash',
+            groups:[
+              { id:'ssti_hz_1', label:'Rash', rule:'Required',
+                items:[
+                  {id:'sh1',text:'Vesicular rash'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'ssti_hz_s2', title:'2. Confirmation',
+            groups:[
+              { id:'ssti_hz_2', label:'Confirmation', rule:'≥1 required',
+                items:[
+                  {id:'sh2',text:'Physician diagnosis'},
+                  {id:'sh3',text:'Laboratory confirmation'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Reactivation of herpes simplex (cold sores) or varicella zoster (shingles) is NOT considered healthcare-associated. Primary infections are uncommon in LTCFs except in paediatric populations.',
+      },
+      { id:'ssti_conj', label:'Conjunctivitis',
+        rule:'At least ONE of the following must be met',
+        sections:[
+          { id:'ssti_cj_s1', title:'Signs & Symptoms — at least ONE',
+            groups:[
+              { id:'ssti_cj_1', label:'Criteria', rule:'≥1 required',
+                items:[
+                  {id:'scj1',text:'Pus from one or both eyes, present for ≥24 hours'},
+                  {id:'scj2',text:'New or increased conjunctival redness (erythema), with or without itching'},
+                  {id:'scj3',text:'New or increased conjunctival pain, present for ≥24 hours'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Symptoms should not be due to allergic reaction or trauma.',
+      },
+    ]
+  },
+
+  /* ─────── GITI ─────── */
+  { id:'giti', icon:'🦠', label:'GITI', full:'Gastrointestinal Tract Infection', color:'var(--giti)', bg:'var(--giti-bg)', bdr:'var(--giti-bdr)',
+    subtypes:[
+      { id:'giti_gastro', label:'Gastroenteritis',
+        rule:'At least ONE of the following pathways (a), (b), or (c) must be met',
+        sections:[
+          { id:'giti_g_s1', title:'Pathway A — Diarrhea',
+            groups:[
+              { id:'giti_g_1a', label:'Diarrhea', rule:'Alone meets criteria if present',
+                items:[
+                  {id:'gg1',text:'≥3 liquid or watery stools above normal for resident within 24 hours'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'giti_g_s2', title:'Pathway B — Vomiting',
+            groups:[
+              { id:'giti_g_1b', label:'Vomiting', rule:'Alone meets criteria if present',
+                items:[
+                  {id:'gg2',text:'≥2 vomiting episodes within 24 hours'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'giti_g_s3', title:'Pathway C — Positive stool + ≥1 symptom',
+            groups:[
+              { id:'giti_g_1c1', label:'Stool pathogen', rule:'Required for pathway C',
+                items:[
+                  {id:'gg3',text:'Stool specimen positive for a pathogen (e.g. Salmonella, Shigella, E. coli O157:H7, Campylobacter, rotavirus)'},
+                ]},
+              { id:'giti_g_1c2', label:'Plus ≥1 symptom', rule:'≥1 required with positive stool',
+                items:[
+                  {id:'gg4',text:'Nausea'},
+                  {id:'gg5',text:'Vomiting'},
+                  {id:'gg6',text:'Abdominal pain or tenderness'},
+                  {id:'gg7',text:'Diarrhea'},
+                ]},
+            ],
+            evalFn:'evalGitiPathwayC'
+          },
+        ],
+        evalFn:'evalAnySectionMet',
+        comments:'Exclude non-infectious causes: new medications, initiation of new enteral feeding. New GI symptoms in a single resident may prompt enhanced surveillance for additional cases.',
+      },
+      { id:'giti_noro', label:'Norovirus Gastroenteritis',
+        rule:'Must fulfil BOTH 1 AND 2',
+        sections:[
+          { id:'giti_n_s1', title:'1. Symptoms — at least ONE',
+            groups:[
+              { id:'giti_n_1', label:'Symptoms', rule:'≥1 required',
+                items:[
+                  {id:'gn1',text:'Diarrhea: ≥3 liquid/watery stools above normal within 24 h'},
+                  {id:'gn2',text:'Vomiting: ≥2 episodes within 24 h'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'giti_n_s2', title:'2. Laboratory confirmation',
+            groups:[
+              { id:'giti_n_2', label:'Norovirus detection', rule:'Required',
+                items:[
+                  {id:'gn3',text:'Stool specimen positive for norovirus (electron microscopy, enzyme immunoassay, or PCR)'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Without lab confirmation, an outbreak (≥2 cases in LTCF) may be assumed if ALL Kaplan Criteria are met: (1) vomiting in >50% of affected persons, (2) mean/median incubation 24–48 h, (3) mean/median illness duration 12–60 h, (4) no bacterial pathogen in stool culture.',
+      },
+      { id:'giti_cdi', label:'C. difficile Infection (CDI)',
+        rule:'Must fulfil BOTH 1 AND 2',
+        sections:[
+          { id:'giti_cd_s1', title:'1. Clinical finding — at least ONE',
+            groups:[
+              { id:'giti_cd_1', label:'Clinical criteria', rule:'≥1 required',
+                items:[
+                  {id:'gcd1',text:'Diarrhea: ≥3 liquid/watery stools above normal within 24 h'},
+                  {id:'gcd2',text:'Toxic megacolon (radiologic finding of abnormal large bowel dilatation)'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+          { id:'giti_cd_s2', title:'2. Diagnostic confirmation — at least ONE',
+            groups:[
+              { id:'giti_cd_2', label:'Diagnostic criteria', rule:'≥1 required',
+                items:[
+                  {id:'gcd3',text:'Stool positive for C. difficile toxin A and/or B, or toxin-producing C. difficile by culture or PCR'},
+                  {id:'gcd4',text:'Pseudomembranous colitis identified on endoscopy, surgery, or histopathology'},
+                ]},
+            ],
+            evalFn:'evalAny'
+          },
+        ],
+        evalFn:'evalAllSections',
+        comments:'Primary episode = no previous CDI or >8 weeks since last onset. Recurrent episode = within 8 weeks of previous onset (after symptoms resolved). Previously infected individuals may remain colonised after symptoms resolve.',
+      },
+    ]
+  },
+
+  /* ─────── OTHER ─────── */
+  { id:'other', icon:'📋', label:'Other', full:'Other (No McGeer criteria)', color:'var(--other)', bg:'var(--other-bg)', bdr:'var(--other-bdr)',
+    subtypes:[
+      { id:'other_free', label:'Free-text record',
+        rule:'No standardised McGeer criteria — record for facility tracking only',
+        sections:[],
+        evalFn:'evalOther',
+        comments:'Use this category for infections that do not fit McGeer-defined categories. Assessment is based on clinical judgement. This will NOT produce a criteria met/not met result.',
+      },
+    ]
+  },
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   DATA MODEL — HARM SCORING & SEVERITY (Phase 2)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Configurable: which HARM scores trigger an Infection Incident Summary.
+   Default = HS1 + HS2 (matches Anglicare model). Facilities can override
+   by editing this constant or, in future, via a Dashboard settings UI. */
+const ESCALATION_THRESHOLD = ['HS1', 'HS2'];
+
+const HARM_SCORES = [
+  { id:'HS1', label:'HS1 — Critical', cls:'hs1',
+    desc:'Death directly attributable to the infection, or imminent life-threatening complication (sepsis, septic shock, respiratory failure).',
+    action:'Generate incident summary; escalate immediately.' },
+  { id:'HS2', label:'HS2 — Major', cls:'hs2',
+    desc:'Hospital admission required; significant clinical deterioration; complications requiring specialist input.',
+    action:'Generate incident summary; escalate within 24 hours.' },
+  { id:'HS3', label:'HS3 — Moderate', cls:'hs3',
+    desc:'GP review required; antimicrobial treatment commenced; prolonged recovery expected; functional decline above baseline.',
+    action:'Surveillance log only; flag for IPC Lead review.' },
+  { id:'HS4', label:'HS4 — Minor', cls:'hs4',
+    desc:'Minimal symptoms; self-limiting; managed with standard nursing care; no specialist input required.',
+    action:'Surveillance log only.' },
+  { id:'HS5', label:'HS5 — No Harm / Near Miss', cls:'hs5',
+    desc:'Suspected but not confirmed; resident asymptomatic; prevented through early intervention.',
+    action:'Surveillance log only.' },
+];
+
+const ANTIMICROBIAL_OPTIONS = [
+  { id:'YES', label:'YES — antimicrobials prescribed by GP for treatment of this infection' },
+  { id:'NO', label:'NO — antimicrobials not prescribed for this infection' },
+  { id:'PROPHYLAXIS', label:'PROPHYLAXIS — antimicrobials prescribed prophylactically (separate from this episode)' },
+  { id:'ALTERNATIVE', label:'ALTERNATIVE STRATEGIES — non-antimicrobial management (fluids, monitoring, comfort care)' },
+];
+
+const NOTIFICATION_RECIPIENTS = [
+  { id:'ipcLead', label:'IPC Lead' },
+  { id:'qualityManager', label:'Quality Manager' },
+  { id:'facilityManager', label:'Facility Manager' },
+  { id:'careManager', label:'Clinical / Care Manager' },
+  { id:'medicalDirector', label:'Medical Director / GP' },
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════ */
+let state = {
+  checks: {},          // { itemId: true/false }
+  selectedCat: null,   // category id
+  selectedSub: null,   // subtype id
+  otherNotes: '',
+  severity: {
+    harmScore: null,           // 'HS1' | 'HS2' | 'HS3' | 'HS4' | 'HS5'
+    hospitalised: null,        // true | false | null (unanswered)
+    gpReview: null,            // true | false | null
+    antimicrobials: null,      // 'YES' | 'NO' | 'PROPHYLAXIS' | 'ALTERNATIVE'
+    pathologyCollected: null,  // true | false | null
+    pathologyResult: '',       // free-text
+    notifications: [],         // ['ipcLead', 'qualityManager', ...]
+    additionalInfo: '',        // free-text
+  },
+};
+let assessmentLog = JSON.parse(localStorage.getItem('mcgeer-log-v2') || '[]');
+let fallbackUnits = JSON.parse(localStorage.getItem('mcgeer-fallback-units') || '[]');
+
+/* ═══════════════════════════════════════════════════════════════
+   EVALUATION FUNCTIONS
+   ═══════════════════════════════════════════════════════════════ */
+function countChecked(items) { return items.filter(i => state.checks[i.id]).length; }
+
+const EVAL = {
+  evalAny(section) {
+    const allItems = section.groups.flatMap(g => g.items);
+    return countChecked(allItems) >= 1;
+  },
+  evalMin2(section) {
+    const allItems = section.groups.flatMap(g => g.items);
+    return countChecked(allItems) >= 2;
+  },
+  evalMin3(section) {
+    const allItems = section.groups.flatMap(g => g.items);
+    return countChecked(allItems) >= 3;
+  },
+  evalUtiNcSigns(section) {
+    // Group (a): any localising symptom
+    const grpA = section.groups.find(g => g.id === 'uti_nc_1a');
+    const aMet = grpA && countChecked(grpA.items) >= 1;
+    // Group (b): fever/leukocytosis + ≥1 GU symptom
+    const grpB = section.groups.find(g => g.id === 'uti_nc_1b');
+    const hasFeverOrLeuk = isConstitutionalMet('fever') || isConstitutionalMet('leukocytosis');
+    const bMet = grpB && hasFeverOrLeuk && countChecked(grpB.items) >= 1;
+    // Group (c): no fever, no leukocytosis, ≥2 GU symptoms
+    const grpC = section.groups.find(g => g.id === 'uti_nc_1c');
+    const noFeverLeuk = !isConstitutionalMet('fever') && !isConstitutionalMet('leukocytosis');
+    const cMet = grpC && noFeverLeuk && countChecked(grpC.items) >= 2;
+    return aMet || bMet || cMet;
+  },
+  evalSstiPathwayB(section) {
+    const inflam = section.groups.find(g => g.id === 'ssti_w_2a');
+    const constit = section.groups.find(g => g.id === 'ssti_w_2b');
+    return inflam && constit && countChecked(inflam.items) >= 4 && countChecked(constit.items) >= 1;
+  },
+  evalGitiPathwayC(section) {
+    const stool = section.groups.find(g => g.id === 'giti_g_1c1');
+    const symptoms = section.groups.find(g => g.id === 'giti_g_1c2');
+    return stool && symptoms && countChecked(stool.items) >= 1 && countChecked(symptoms.items) >= 1;
+  },
+  evalAllSections(subtype) {
+    if (!subtype.sections || subtype.sections.length === 0) return null;
+    return subtype.sections.every(sec => EVAL[sec.evalFn](sec));
+  },
+  evalAnySectionMet(subtype) {
+    if (!subtype.sections || subtype.sections.length === 0) return null;
+    return subtype.sections.some(sec => EVAL[sec.evalFn](sec));
+  },
+  evalOther() { return null; },
+};
+
+function isConstitutionalMet(constId) {
+  const c = CONSTITUTIONAL.find(x => x.id === constId);
+  if (!c) return false;
+  if (c.logic === 'all') return c.items.every(i => state.checks[i.id]);
+  return c.items.some(i => state.checks[i.id]);
 }
 
-# List of customer names from the CSV
-$customerNames = @(
-"Anglicare NSW - Head Office",
-"Southern Cross Care Living - NSW ACT",
-"Keyton",
-"BaptistCare NSW and ACT - Head Office",
-"Hardi Aged Care",
-"Medclean Pty Ltd",
-"HammondCare - Head Office",
-"Columbia Aged Care Services",
-"Twilight Aged Care",
-"The Pioneers Lodge Limited",
-"Christian Brethren Community Services",
-"Harbison - Head Office",
-"The Sisters of Our Lady of China",
-"Carino Care - Head Office",
-"Hall and Prior",
-"UPA Murray River Region",
-"Scalabrini - Head Office",
-"The Trustee for Edensor Gardens Advantaged Care",
-"Fresh Hope Communities",
-"Pines Living Pty Ltd",
-"Booroongen Djugun Aboriginal Corp",
-"Mission Australia - Head Office",
-"Montefiore",
-"NVC Group",
-"Northern Coalfields Community Care Association",
-"UPA NSW",
-"SWIAA Villages",
-"Australian Vietnamese Aged Care Services Inc",
-"Respect Aged Care - Mitchell House Hudson House",
-"Georgina Hostel Aged Care Facility",
-"BaptistCare At Home services",
-"Leigh Place Aged Care",
-"Banksia Village",
-"Cooinda Court Aged Care Hostel",
-"Bankstown City Aged Care Ltd",
-"St Agnes Care Lifestyle",
-"Bluewave Living",
-"Cardinal Stepinac Village",
-"Jesmond Aged Care Pty Ltd",
-"Peninsula Villages",
-"Aged Care Deloraine",
-"Sawtell Catholic Care - Mater Christi",
-"Sapphire Coast Community Aged Care HO",
-"NovaCare",
-"The Palms Aged Care",
-"Cooinda Coonabarabran Ltd",
-"Aveo Group",
-"St Catherines Aged Care Services Ltd",
-"Corumbene Care",
-"Barunga Village Inc",
-"Three Tree Lodge",
-"Woodlands Aged Care",
-"Saint Nicholas Aged Care",
-"Guardian Property Services Pty Ltd",
-"The Good Shepherd Home",
-"Bushland Health Group Ltd",
-"Highfields Manor - Port Macquarie",
-"Jindalee Aged Care Centre",
-"Laurieton Lakeside Aged Care Residence",
-"The Salvation Army - James Barker House",
-"myHomecare Pty Ltd",
-"Thompson Health Care - Beecroft Nursing Home",
-"Adventist Aged Care - Kings Langley",
-"Advance Diversity Services Ltd",
-"Estia Health - Albany Creek",
-"Gummun Place Hostel",
-"The Forrest Centre Loreto Home of Compassion",
-"Goondee Aged Care",
-"Merton Living Ltd"
-)
+function evaluateCurrentSubtype() {
+  const cat = CATEGORIES.find(c => c.id === state.selectedCat);
+  if (!cat) return null;
+  const sub = cat.subtypes.find(s => s.id === state.selectedSub);
+  if (!sub) return null;
+  return EVAL[sub.evalFn](sub);
+}
 
-Write-Host ""
-Write-Host "Creating client folders under 02_Clients..." -ForegroundColor Yellow
+/* ═══════════════════════════════════════════════════════════════
+   TAB SWITCHING
+   ═══════════════════════════════════════════════════════════════ */
+function switchTab(tabId) {
+  document.querySelectorAll('.vp').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  // Find and activate the correct tab button
+  const tabs = document.querySelectorAll('.tab');
+  const names = ['assess','log','guide','locations'];
+  const idx = names.indexOf(tabId);
+  if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
+  if (tabId === 'log') renderLog();
+  if (tabId === 'guide') renderGuide();
+  if (tabId === 'locations') renderLocations();
+}
 
-foreach ($name in $customerNames) {
-    $clientFolder = Join-Path $clientsRoot $name
-    if (-not (Test-Path $clientFolder)) {
-        New-Item -Path $clientFolder -ItemType Directory -Force | Out-Null
-        Write-Host "Created: $clientFolder"
+/* ═══════════════════════════════════════════════════════════════
+   RENDER: CONSTITUTIONAL CRITERIA
+   ═══════════════════════════════════════════════════════════════ */
+function renderConstitutional() {
+  const el = document.getElementById('constChecks');
+  let html = '';
+  CONSTITUTIONAL.forEach(c => {
+    const met = isConstitutionalMet(c.id);
+    html += '<div class="criteria-section">';
+    html += `<div class="criteria-header" style="background:var(--const-bg);color:var(--const)">
+      <span>${c.label}</span>
+      <span style="font-size:11px;padding:3px 8px;border-radius:10px;background:${met ? 'var(--met-bg)' : '#FFF'};color:${met ? 'var(--met)' : 'var(--light)'};border:1px solid ${met ? '#A7F3D0' : 'var(--border)'}">${met ? '✓ Present' : '— Not met'}</span>
+    </div>`;
+    html += '<div class="criteria-body">';
+    html += `<div class="criteria-rule">${c.rule}</div>`;
+    c.items.forEach(item => {
+      const ck = state.checks[item.id] ? 'checked' : '';
+      html += `<div class="check-item ${ck ? 'checked' : ''}">
+        <input type="checkbox" id="ck_${item.id}" ${ck} onchange="toggleCheck('${item.id}')">
+        <label for="ck_${item.id}">${item.text}</label>
+      </div>`;
+    });
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER: CATEGORY GRID
+   ═══════════════════════════════════════════════════════════════ */
+function renderCategoryGrid() {
+  const el = document.getElementById('catGrid');
+  let html = '';
+  CATEGORIES.forEach(cat => {
+    const sel = state.selectedCat === cat.id ? 'selected' : '';
+    const bdrStyle = sel ? `border-color:${cat.color};background:${cat.bg}` : '';
+    html += `<button class="cat-btn ${sel}" style="${bdrStyle}" onclick="selectCategory('${cat.id}')">
+      <div class="cat-icon">${cat.icon}</div>
+      <div class="cat-label" style="color:${sel ? cat.color : 'var(--text)'}">${cat.label}</div>
+      <div class="cat-sub">${cat.full}</div>
+    </button>`;
+  });
+  el.innerHTML = html;
+}
+
+function selectCategory(catId) {
+  state.selectedCat = catId;
+  const cat = CATEGORIES.find(c => c.id === catId);
+  state.selectedSub = cat.subtypes[0]?.id || null;
+  renderCategoryGrid();
+  renderWorkspace();
+  renderSeverity();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER: ASSESSMENT WORKSPACE
+   ═══════════════════════════════════════════════════════════════ */
+function renderWorkspace() {
+  const ws = document.getElementById('assessWorkspace');
+  const actions = document.getElementById('assessActions');
+  const cat = CATEGORIES.find(c => c.id === state.selectedCat);
+  if (!cat) { ws.innerHTML = ''; actions.style.display = 'none'; return; }
+  actions.style.display = 'flex';
+
+  let html = '';
+
+  // Subtype selector
+  if (cat.subtypes.length > 1) {
+    html += '<div class="card"><div class="card-title" style="color:' + cat.color + '">' + cat.icon + ' ' + cat.full + ' — Select Sub-type</div>';
+    html += '<div class="subtype-bar">';
+    cat.subtypes.forEach(sub => {
+      const active = state.selectedSub === sub.id;
+      const style = active ? `background:${cat.color};color:#FFF;border-color:${cat.color}` : '';
+      html += `<button class="subtype-btn ${active ? 'active' : ''}" style="${style}" onclick="selectSubtype('${sub.id}')">${sub.label}</button>`;
+    });
+    html += '</div></div>';
+  }
+
+  // Criteria for selected subtype
+  const sub = cat.subtypes.find(s => s.id === state.selectedSub);
+  if (!sub) { ws.innerHTML = html; return; }
+
+  html += `<div class="card">`;
+  html += `<div class="card-title" style="color:${cat.color}">${cat.icon} ${sub.label}</div>`;
+  html += `<div class="criteria-rule" style="border-left-color:${cat.color}">${sub.rule}</div>`;
+
+  if (cat.id === 'other') {
+    html += `<div style="margin-top:10px">
+      <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Clinical Notes / Description</label>
+      <textarea id="otherNotes" rows="4" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:7px;font-size:13px;resize:vertical" 
+        oninput="state.otherNotes=this.value" placeholder="Describe the infection and clinical basis for recording...">${state.otherNotes}</textarea>
+    </div>`;
+  } else {
+    // Render each section
+    sub.sections.forEach(sec => {
+      const secMet = EVAL[sec.evalFn](sec);
+      html += `<div class="criteria-section">
+        <div class="criteria-header" style="background:${cat.bg};color:${cat.color}">
+          <span>${sec.title}</span>
+          <span style="font-size:11px;padding:3px 8px;border-radius:10px;background:${secMet ? 'var(--met-bg)' : '#FFF'};color:${secMet ? 'var(--met)' : 'var(--light)'};border:1px solid ${secMet ? '#A7F3D0' : 'var(--border)'}">${secMet ? '✓ Met' : '— Not met'}</span>
+        </div>
+        <div class="criteria-body">`;
+
+      sec.groups.forEach(grp => {
+        html += `<div class="subgroup">`;
+        html += `<div class="subgroup-title">${grp.label}</div>`;
+        if (grp.rule) html += `<div style="font-size:10.5px;color:var(--muted);margin-bottom:6px">${grp.rule}</div>`;
+        grp.items.forEach(item => {
+          const ck = state.checks[item.id] ? 'checked' : '';
+          html += `<div class="check-item ${ck ? 'checked' : ''}">
+            <input type="checkbox" id="ck_${item.id}" ${ck} onchange="toggleCheck('${item.id}')">
+            <label for="ck_${item.id}">${item.text}</label>
+          </div>`;
+        });
+        html += '</div>';
+      });
+      html += '</div></div>';
+    });
+  }
+
+  // Comments
+  if (sub.comments) {
+    html += `<div class="comment-box">💡 <strong>Note:</strong> ${sub.comments}</div>`;
+  }
+
+  html += '</div>';
+
+  // Result banner
+  if (cat.id !== 'other') {
+    const result = evaluateCurrentSubtype();
+    if (result === true) {
+      html += `<div class="result-banner met">✅ CRITERIA MET — ${cat.label}: ${sub.label}</div>`;
+    } else if (result === false) {
+      html += `<div class="result-banner notmet">❌ CRITERIA NOT MET — Review selections above</div>`;
+    } else {
+      html += `<div class="result-banner pending">⏳ Complete the checkboxes above to evaluate</div>`;
     }
-    else {
-        Write-Host "Exists (skipped): $clientFolder"
-    }
+  }
+
+  ws.innerHTML = html;
 }
 
-Write-Host ""
-Write-Host "Client folders created under:" -ForegroundColor Green
-Write-Host "  $clientsRoot"
-Write-Host ""
-Write-Host "Next: for each client, create project folders (ProjectName) and then add:"
-Write-Host "  01_Brief, 02_Planning, 03_Working_Files, 04_Deliverables,"
-Write-Host "  05_Meetings_Notes, 06_Assets_Client, 07_Assets_Created"
+function selectSubtype(subId) {
+  state.selectedSub = subId;
+  renderWorkspace();
+  renderSeverity();
+}
+
+function toggleCheck(itemId) {
+  state.checks[itemId] = !state.checks[itemId];
+  renderConstitutional();
+  renderWorkspace();
+  renderSeverity();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER: SEVERITY / HARM SCORING SECTION
+   ═══════════════════════════════════════════════════════════════ */
+function renderSeverity() {
+  const el = document.getElementById('severitySection');
+  if (!el) return;
+  // Only show severity once a category is chosen
+  if (!state.selectedCat) { el.innerHTML = ''; return; }
+
+  const sev = state.severity;
+  const hasHarm = !!sev.harmScore;
+  const escalating = sev.harmScore && ESCALATION_THRESHOLD.includes(sev.harmScore);
+
+  let html = `<div class="severity-card ${hasHarm ? 'has-harm' : ''}">`;
+  html += `<div class="card-title">⚖️ Severity Assessment</div>`;
+  html += `<div class="severity-intro">
+    The HARM score is independent of the McGeer surveillance verdict. It captures the clinician's
+    judgement of how serious this episode is for this resident, and routes the assessment to the
+    appropriate downstream pathway. <strong>HS1 and HS2 trigger an Infection Incident Summary
+    suitable for upload to your facility's incident management system.</strong>
+  </div>`;
+
+  // HARM score selector
+  html += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">HARM Score <span style="color:var(--notmet)">*</span></div>`;
+  html += `<div class="harm-grid">`;
+  HARM_SCORES.forEach(h => {
+    const sel = sev.harmScore === h.id ? 'selected' : '';
+    const escTag = ESCALATION_THRESHOLD.includes(h.id)
+      ? '<span class="harm-tag escalate">ESCALATE</span>'
+      : '';
+    html += `<div class="harm-option ${h.cls} ${sel}" onclick="setHarmScore('${h.id}')">
+      <div class="harm-radio"></div>
+      <div class="harm-content">
+        <div class="harm-label">${h.label}${escTag}</div>
+        <div class="harm-desc">${h.desc}</div>
+        <div class="harm-action">→ ${h.action}</div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Supporting fields (only shown after HARM score chosen, to keep the form lean)
+  if (hasHarm) {
+    html += `<div class="sev-fields">`;
+
+    // Hospitalised
+    html += `<div class="sev-field">
+      <span class="sev-field-label">Resident Hospitalised?</span>
+      <div class="sev-yn">
+        <button class="sev-yn-btn yes ${sev.hospitalised === true ? 'active' : ''}" onclick="setSevYN('hospitalised', true)">YES</button>
+        <button class="sev-yn-btn no ${sev.hospitalised === false ? 'active' : ''}" onclick="setSevYN('hospitalised', false)">NO</button>
+      </div>
+    </div>`;
+
+    // GP Review
+    html += `<div class="sev-field">
+      <span class="sev-field-label">GP / Medical Review Sought?</span>
+      <div class="sev-yn">
+        <button class="sev-yn-btn yes ${sev.gpReview === true ? 'active' : ''}" onclick="setSevYN('gpReview', true)">YES</button>
+        <button class="sev-yn-btn no ${sev.gpReview === false ? 'active' : ''}" onclick="setSevYN('gpReview', false)">NO</button>
+      </div>
+    </div>`;
+
+    // Antimicrobials
+    html += `<div class="sev-field" style="grid-column:1/-1">
+      <span class="sev-field-label">Antimicrobials Prescribed?</span>
+      <select class="sev-select" onchange="setAntimicrobials(this.value)">
+        <option value="">— Select —</option>`;
+    ANTIMICROBIAL_OPTIONS.forEach(o => {
+      const sel = sev.antimicrobials === o.id ? 'selected' : '';
+      html += `<option value="${o.id}" ${sel}>${o.label}</option>`;
+    });
+    html += `</select>
+    </div>`;
+
+    // Pathology
+    html += `<div class="sev-field" style="grid-column:1/-1">
+      <span class="sev-field-label">Pathology Collected?</span>
+      <div class="sev-yn" style="margin-bottom:8px">
+        <button class="sev-yn-btn yes ${sev.pathologyCollected === true ? 'active' : ''}" onclick="setSevYN('pathologyCollected', true)">YES</button>
+        <button class="sev-yn-btn no ${sev.pathologyCollected === false ? 'active' : ''}" onclick="setSevYN('pathologyCollected', false)">NO</button>
+      </div>`;
+    if (sev.pathologyCollected === true) {
+      html += `<textarea class="sev-textarea" rows="2" placeholder="Pathology result (organism, sensitivities, collection date, etc.)" 
+        onchange="state.severity.pathologyResult = this.value">${escapeHtml(sev.pathologyResult)}</textarea>`;
+    }
+    html += `</div>`;
+
+    // Notifications
+    html += `<div class="sev-field" style="grid-column:1/-1">
+      <span class="sev-field-label">Notification Recipients</span>
+      <div class="notif-grid">`;
+    NOTIFICATION_RECIPIENTS.forEach(r => {
+      const active = sev.notifications.includes(r.id) ? 'active' : '';
+      html += `<button class="notif-chip ${active}" onclick="toggleNotification('${r.id}')">${r.label}</button>`;
+    });
+    html += `</div>
+    </div>`;
+
+    // Additional info
+    html += `<div class="sev-field" style="grid-column:1/-1">
+      <span class="sev-field-label">Additional Information</span>
+      <textarea class="sev-textarea" rows="3" placeholder="Clinical context, escalation rationale, follow-up actions..." 
+        onchange="state.severity.additionalInfo = this.value">${escapeHtml(sev.additionalInfo)}</textarea>
+    </div>`;
+
+    html += `</div>`;  // end .sev-fields
+  }
+
+  html += `</div>`;  // end .severity-card
+
+  // Escalation banner (preview before save)
+  if (escalating) {
+    html += `<div class="escalation-banner">
+      <div class="escalation-icon">🚨</div>
+      <div class="escalation-text">
+        <div class="escalation-title">Escalation Required — ${sev.harmScore}</div>
+        <div class="escalation-body">
+          When you save this assessment, an <strong>Infection Incident Summary</strong> will be
+          generated with a unique reference number, ready to print, download, or copy into your
+          facility's incident management system (RaiseIT, RiskMan, paper-based, etc.).
+        </div>
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function setHarmScore(scoreId) {
+  state.severity.harmScore = scoreId;
+  renderSeverity();
+  updateSaveValidation();
+}
+
+function setSevYN(field, value) {
+  // Toggle off if same value clicked again
+  state.severity[field] = state.severity[field] === value ? null : value;
+  renderSeverity();
+}
+
+function setAntimicrobials(value) {
+  state.severity.antimicrobials = value || null;
+}
+
+function toggleNotification(recipientId) {
+  const list = state.severity.notifications;
+  const idx = list.indexOf(recipientId);
+  if (idx >= 0) list.splice(idx, 1);
+  else list.push(recipientId);
+  renderSeverity();
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INCIDENT REFERENCE GENERATION
+   ═══════════════════════════════════════════════════════════════ */
+function generateIncidentRef() {
+  const dateParts = new Date().toISOString().slice(0,10).split('-');  // ['2026','04','17']
+  const dateKey = dateParts.join('');                                  // '20260417'
+  const dateLabel = dateParts.join('-');                               // '2026-04-17'
+  const counterKey = 'mcgeer-incident-counter-' + dateKey;
+  const counter = parseInt(localStorage.getItem(counterKey) || '0', 10) + 1;
+  localStorage.setItem(counterKey, String(counter));
+  return `IPC-${dateLabel}-${String(counter).padStart(3, '0')}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SAVE VALIDATION (gate the save button on required severity fields)
+   ═══════════════════════════════════════════════════════════════ */
+function updateSaveValidation() {
+  const el = document.getElementById('saveValidation');
+  if (!el) return;
+  const issues = [];
+  if (!state.selectedCat) issues.push('select an infection category');
+  if (!state.severity.harmScore) issues.push('assign a HARM score');
+  if (issues.length === 0) {
+    el.classList.remove('visible');
+    el.textContent = '';
+  } else {
+    el.classList.add('visible');
+    el.innerHTML = `⚠️ Before saving, please: ${issues.join(' and ')}.`;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   SAVE / RESET / LOG
+   ═══════════════════════════════════════════════════════════════ */
+function saveAssessment() {
+  const cat = CATEGORIES.find(c => c.id === state.selectedCat);
+  const sub = cat?.subtypes.find(s => s.id === state.selectedSub);
+  if (!cat || !sub) { alert('Please select an infection category and sub-type first.'); return; }
+
+  const name = document.getElementById('resName').value.trim();
+  if (!name) { alert('Please enter the resident name/ID.'); return; }
+
+  // Severity validation — HARM score is required
+  if (!state.severity.harmScore) {
+    alert('Please assign a HARM score before saving.\n\nThis is required for all assessments and determines whether an Infection Incident Summary is generated.');
+    return;
+  }
+
+  const result = evaluateCurrentSubtype();
+  const escalating = ESCALATION_THRESHOLD.includes(state.severity.harmScore);
+  const incidentRef = escalating ? generateIncidentRef() : null;
+  const nowIso = new Date().toISOString();
+
+  const entry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    timestamp: nowIso,
+    resident: name,
+    room: document.getElementById('resRoom').value.trim(),
+    location: document.getElementById('resLocation').value,
+    date: document.getElementById('resDate').value,
+    assessor: document.getElementById('resAssessor').value.trim(),
+    category: cat.id,
+    categoryLabel: cat.label,
+    subtype: sub.id,
+    subtypeLabel: sub.label,
+    criteriaMet: result,
+    checks: { ...state.checks },
+    otherNotes: state.otherNotes,
+    constitutionalStatus: {
+      fever: isConstitutionalMet('fever'),
+      leukocytosis: isConstitutionalMet('leukocytosis'),
+      mentalStatus: isConstitutionalMet('mentalStatus'),
+      funcDecline: isConstitutionalMet('funcDecline'),
+    },
+    severity: {
+      harmScore: state.severity.harmScore,
+      hospitalised: state.severity.hospitalised,
+      gpReview: state.severity.gpReview,
+      antimicrobials: state.severity.antimicrobials,
+      pathology: {
+        collected: state.severity.pathologyCollected,
+        result: state.severity.pathologyResult,
+      },
+      notifications: [...state.severity.notifications],
+      additionalInfo: state.severity.additionalInfo,
+      incidentRef: incidentRef,
+      escalated: escalating,
+      escalatedAt: escalating ? nowIso : null,
+    },
+  };
+
+  assessmentLog.unshift(entry);
+  localStorage.setItem('mcgeer-log-v2', JSON.stringify(assessmentLog));
+
+  // If escalating, render the incident summary inline below severity section
+  if (escalating) {
+    showIncidentSummaryInline(entry);
+    // Scroll to it
+    setTimeout(() => {
+      const node = document.getElementById('liveIncidentSummary');
+      if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  } else {
+    alert(`Assessment saved.\n\n${cat.label} — ${sub.label}\nMcGeer verdict: ${result === true ? 'CRITERIA MET' : result === false ? 'CRITERIA NOT MET' : 'N/A (Other)'}\nHARM score: ${state.severity.harmScore}\n\nLogged for surveillance only — no incident escalation required.`);
+  }
+}
+
+function resetAssessment() {
+  if (!confirm('Reset all checkboxes, severity assessment, and form fields?')) return;
+  state.checks = {};
+  state.selectedCat = null;
+  state.selectedSub = null;
+  state.otherNotes = '';
+  state.severity = {
+    harmScore: null,
+    hospitalised: null,
+    gpReview: null,
+    antimicrobials: null,
+    pathologyCollected: null,
+    pathologyResult: '',
+    notifications: [],
+    additionalInfo: '',
+  };
+  document.getElementById('resName').value = '';
+  document.getElementById('resRoom').value = '';
+  document.getElementById('resDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('resAssessor').value = '';
+  renderConstitutional();
+  renderCategoryGrid();
+  renderWorkspace();
+  renderSeverity();
+  // Clear any inline incident summary
+  const liveSummary = document.getElementById('liveIncidentSummary');
+  if (liveSummary) liveSummary.remove();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER: ASSESSMENT LOG
+   ═══════════════════════════════════════════════════════════════ */
+function renderLog() {
+  const el = document.getElementById('logList');
+  if (assessmentLog.length === 0) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No saved assessments yet.</p>';
+    return;
+  }
+
+  // Summary stats at top
+  const total = assessmentLog.length;
+  const escalated = assessmentLog.filter(e => e.severity?.escalated).length;
+  const met = assessmentLog.filter(e => e.criteriaMet === true).length;
+  const harmCounts = { HS1:0, HS2:0, HS3:0, HS4:0, HS5:0 };
+  assessmentLog.forEach(e => { if (e.severity?.harmScore) harmCounts[e.severity.harmScore]++; });
+
+  let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px;padding:12px;background:#FAFBFC;border-radius:8px;border:1px solid var(--border)">
+    <div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--primary)">${total}</div><div style="font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">Total</div></div>
+    <div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--met)">${met}</div><div style="font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">Criteria Met</div></div>
+    <div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--notmet)">${escalated}</div><div style="font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">Escalated</div></div>`;
+  ['HS1','HS2','HS3','HS4','HS5'].forEach(hs => {
+    const cls = hs.toLowerCase();
+    html += `<div style="text-align:center"><div style="font-size:18px;font-weight:700"><span class="harm-badge ${cls}">${hs} · ${harmCounts[hs]}</span></div></div>`;
+  });
+  html += `</div>`;
+
+  // List
+  assessmentLog.forEach((entry, idx) => {
+    const cat = CATEGORIES.find(c => c.id === entry.category);
+    const badgeClass = entry.criteriaMet === true ? 'met' : entry.criteriaMet === false ? 'notmet' : '';
+    const badgeText = entry.criteriaMet === true ? 'Met' : entry.criteriaMet === false ? 'Not Met' : 'N/A';
+    const dateStr = entry.date || entry.timestamp?.slice(0,10) || '';
+
+    const harm = entry.severity?.harmScore;
+    const harmCls = harm ? harm.toLowerCase() : '';
+    const harmBadge = harm ? `<span class="harm-badge ${harmCls}">${harm}</span>` : '';
+    const escalated = entry.severity?.escalated;
+    const incidentRef = entry.severity?.incidentRef;
+
+    html += `<div class="log-item" style="${escalated ? 'border-left:4px solid var(--notmet)' : ''}">
+      <div class="li-left">
+        <div class="li-name">${cat?.icon || '📋'} ${escapeHtml(entry.resident)} ${harmBadge}</div>
+        <div class="li-detail">${escapeHtml(entry.categoryLabel)} → ${escapeHtml(entry.subtypeLabel)} · ${escapeHtml(dateStr)} · ${escapeHtml(entry.location || 'No location')} · By: ${escapeHtml(entry.assessor || '—')}</div>
+        ${incidentRef ? `<div style="font-size:10.5px;color:var(--notmet);font-family:'Courier New',monospace;margin-top:3px;font-weight:700">🚨 ${incidentRef}</div>` : ''}
+      </div>
+      <span class="log-badge ${badgeClass}">${badgeText}</span>
+      ${escalated ? `<button class="btn btn-outline btn-sm" onclick="reopenIncident('${entry.id}')" title="View / reprint Incident Summary">📋</button>` : ''}
+      <button class="btn btn-outline btn-sm" onclick="deleteLogEntry(${idx})" title="Delete">✕</button>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function reopenIncident(entryId) {
+  const entry = findEntryById(entryId);
+  if (!entry) { alert('Entry not found.'); return; }
+  // Build a modal-like overlay showing the summary with action buttons
+  const overlay = document.createElement('div');
+  overlay.id = 'incidentOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:30px;overflow-y:auto';
+  overlay.innerHTML = `
+    <div style="background:#FFF;border-radius:10px;max-width:760px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.3)">
+      ${buildIncidentSummaryHtml(entry)}
+      <div class="incident-actions">
+        <button class="btn btn-primary btn-sm" onclick="printIncidentSummary('${entry.id}')">🖨️ Print</button>
+        <button class="btn btn-outline btn-sm" onclick="downloadIncidentSummary('${entry.id}')">⬇️ Download HTML</button>
+        <button class="btn btn-outline btn-sm" onclick="copyIncidentSummary('${entry.id}')">📋 Copy to Clipboard</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('incidentOverlay').remove()">✕ Close</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+function deleteLogEntry(idx) {
+  if (!confirm('Delete this assessment?')) return;
+  assessmentLog.splice(idx, 1);
+  localStorage.setItem('mcgeer-log-v2', JSON.stringify(assessmentLog));
+  renderLog();
+}
+
+function clearLog() {
+  if (!confirm('Delete ALL saved assessments? This cannot be undone.')) return;
+  assessmentLog = [];
+  localStorage.setItem('mcgeer-log-v2', '[]');
+  renderLog();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INCIDENT SUMMARY (HS1 / HS2 escalation output)
+   ═══════════════════════════════════════════════════════════════ */
+function buildIncidentSummaryHtml(entry) {
+  const harm = HARM_SCORES.find(h => h.id === entry.severity.harmScore);
+  const verdictText = entry.criteriaMet === true ? 'CRITERIA MET' :
+                      entry.criteriaMet === false ? 'CRITERIA NOT MET' : 'N/A (Other category)';
+  const verdictColour = entry.criteriaMet === true ? 'var(--met)' :
+                        entry.criteriaMet === false ? 'var(--notmet)' : 'var(--muted)';
+
+  // Build constitutional summary
+  const cs = entry.constitutionalStatus || {};
+  const constSummary = [
+    cs.fever ? 'Fever' : null,
+    cs.leukocytosis ? 'Leukocytosis' : null,
+    cs.mentalStatus ? 'Acute mental status change' : null,
+    cs.funcDecline ? 'Acute functional decline' : null,
+  ].filter(Boolean).join(', ') || 'None of the constitutional criteria met';
+
+  // Antimicrobial label
+  const amOpt = ANTIMICROBIAL_OPTIONS.find(o => o.id === entry.severity.antimicrobials);
+  const amText = amOpt ? amOpt.label : 'Not recorded';
+
+  // Pathology
+  const path = entry.severity.pathology || {};
+  let pathText = path.collected === true ? 'YES — collected' :
+                 path.collected === false ? 'NO — not collected' : 'Not recorded';
+  if (path.collected && path.result) pathText += ' · Result: ' + escapeHtml(path.result);
+
+  // Notifications
+  const notifLabels = (entry.severity.notifications || [])
+    .map(id => NOTIFICATION_RECIPIENTS.find(r => r.id === id)?.label)
+    .filter(Boolean);
+  const notifText = notifLabels.length ? notifLabels.join(', ') : 'None selected';
+
+  // Date strings
+  const ts = new Date(entry.timestamp);
+  const generatedAt = ts.toLocaleString('en-AU', { dateStyle: 'medium', timeStyle: 'short' });
+
+  let html = `<div class="incident-summary" id="incidentSummaryContent">
+    <div class="incident-header">
+      <div class="ih-title">🚨 INFECTION INCIDENT SUMMARY</div>
+      <div class="ih-ref">Reference: ${entry.severity.incidentRef} · Generated: ${generatedAt}</div>
+    </div>
+    <div class="incident-body">
+      <div class="incident-row"><span class="ir-label">Resident</span><span class="ir-value"><strong>${escapeHtml(entry.resident)}</strong>${entry.room ? ' · Room ' + escapeHtml(entry.room) : ''}</span></div>
+      <div class="incident-row"><span class="ir-label">Location</span><span class="ir-value">${escapeHtml(entry.location || '—')}</span></div>
+      <div class="incident-row"><span class="ir-label">Assessment Date</span><span class="ir-value">${escapeHtml(entry.date || '—')}</span></div>
+      <div class="incident-row"><span class="ir-label">Assessor</span><span class="ir-value">${escapeHtml(entry.assessor || '—')}</span></div>
+      <div class="incident-row"><span class="ir-label">Infection Category</span><span class="ir-value"><strong>${escapeHtml(entry.categoryLabel)}</strong> — ${escapeHtml(entry.subtypeLabel)}</span></div>
+      <div class="incident-row"><span class="ir-label">McGeer Verdict</span><span class="ir-value" style="color:${verdictColour};font-weight:700">${verdictText}</span></div>
+      <div class="incident-row"><span class="ir-label">Constitutional Findings</span><span class="ir-value">${constSummary}</span></div>
+      <div class="incident-row"><span class="ir-label">HARM Score</span><span class="ir-value"><span class="harm-badge ${harm?.cls || ''}">${harm?.label || entry.severity.harmScore}</span><div style="font-size:11px;color:var(--muted);margin-top:4px">${harm?.desc || ''}</div></span></div>
+      <div class="incident-row"><span class="ir-label">Hospitalised</span><span class="ir-value">${entry.severity.hospitalised === true ? 'YES' : entry.severity.hospitalised === false ? 'NO' : 'Not recorded'}</span></div>
+      <div class="incident-row"><span class="ir-label">GP / Medical Review</span><span class="ir-value">${entry.severity.gpReview === true ? 'YES' : entry.severity.gpReview === false ? 'NO' : 'Not recorded'}</span></div>
+      <div class="incident-row"><span class="ir-label">Antimicrobials</span><span class="ir-value">${escapeHtml(amText)}</span></div>
+      <div class="incident-row"><span class="ir-label">Pathology</span><span class="ir-value">${pathText}</span></div>
+      <div class="incident-row"><span class="ir-label">Notifications Sent</span><span class="ir-value">${escapeHtml(notifText)}</span></div>`;
+  if (entry.severity.additionalInfo) {
+    html += `<div class="incident-row"><span class="ir-label">Additional Info</span><span class="ir-value" style="white-space:pre-wrap">${escapeHtml(entry.severity.additionalInfo)}</span></div>`;
+  }
+  html += `<div class="incident-row"><span class="ir-label">Reference Number</span><span class="ir-value" style="font-family:'Courier New',monospace;font-weight:700">${entry.severity.incidentRef}</span></div>
+    </div>
+  </div>`;
+  return html;
+}
+
+function buildIncidentSummaryText(entry) {
+  // Plain-text version for clipboard
+  const harm = HARM_SCORES.find(h => h.id === entry.severity.harmScore);
+  const verdictText = entry.criteriaMet === true ? 'CRITERIA MET' :
+                      entry.criteriaMet === false ? 'CRITERIA NOT MET' : 'N/A';
+  const cs = entry.constitutionalStatus || {};
+  const constSummary = [
+    cs.fever ? 'Fever' : null,
+    cs.leukocytosis ? 'Leukocytosis' : null,
+    cs.mentalStatus ? 'Acute mental status change' : null,
+    cs.funcDecline ? 'Acute functional decline' : null,
+  ].filter(Boolean).join(', ') || 'None met';
+  const amOpt = ANTIMICROBIAL_OPTIONS.find(o => o.id === entry.severity.antimicrobials);
+  const path = entry.severity.pathology || {};
+  let pathText = path.collected === true ? 'YES' : path.collected === false ? 'NO' : 'Not recorded';
+  if (path.collected && path.result) pathText += ' — ' + path.result;
+  const notifLabels = (entry.severity.notifications || [])
+    .map(id => NOTIFICATION_RECIPIENTS.find(r => r.id === id)?.label).filter(Boolean);
+  const ts = new Date(entry.timestamp);
+
+  return [
+    'INFECTION INCIDENT SUMMARY',
+    '═══════════════════════════════════════════',
+    `Reference:        ${entry.severity.incidentRef}`,
+    `Generated:        ${ts.toLocaleString('en-AU')}`,
+    '',
+    `Resident:         ${entry.resident}${entry.room ? ' (Room ' + entry.room + ')' : ''}`,
+    `Location:         ${entry.location || '—'}`,
+    `Assessment Date:  ${entry.date || '—'}`,
+    `Assessor:         ${entry.assessor || '—'}`,
+    '',
+    `Infection:        ${entry.categoryLabel} — ${entry.subtypeLabel}`,
+    `McGeer Verdict:   ${verdictText}`,
+    `Constitutional:   ${constSummary}`,
+    '',
+    `HARM Score:       ${harm?.label || entry.severity.harmScore}`,
+    `Severity Detail:  ${harm?.desc || ''}`,
+    '',
+    `Hospitalised:     ${entry.severity.hospitalised === true ? 'YES' : entry.severity.hospitalised === false ? 'NO' : 'Not recorded'}`,
+    `GP/Medical Review:${entry.severity.gpReview === true ? 'YES' : entry.severity.gpReview === false ? 'NO' : 'Not recorded'}`,
+    `Antimicrobials:   ${amOpt ? amOpt.label : 'Not recorded'}`,
+    `Pathology:        ${pathText}`,
+    `Notifications:    ${notifLabels.length ? notifLabels.join(', ') : 'None'}`,
+    '',
+    entry.severity.additionalInfo ? `Additional Info:\n${entry.severity.additionalInfo}\n` : '',
+    '═══════════════════════════════════════════',
+    'Generated by McGeer Criteria + HARM Scoring Tool',
+    'IPC Surveillance Suite — Anglicare Model compatible',
+  ].filter(l => l !== undefined).join('\n');
+}
+
+function showIncidentSummaryInline(entry) {
+  // Remove any previous live summary
+  const existing = document.getElementById('liveIncidentSummary');
+  if (existing) existing.remove();
+
+  const wrap = document.createElement('div');
+  wrap.id = 'liveIncidentSummary';
+  wrap.dataset.entryId = entry.id;
+  wrap.innerHTML = buildIncidentSummaryHtml(entry) + `
+    <div class="incident-actions no-print">
+      <button class="btn btn-primary btn-sm" onclick="printIncidentSummary('${entry.id}')">🖨️ Print</button>
+      <button class="btn btn-outline btn-sm" onclick="downloadIncidentSummary('${entry.id}')">⬇️ Download HTML</button>
+      <button class="btn btn-outline btn-sm" onclick="copyIncidentSummary('${entry.id}')">📋 Copy to Clipboard</button>
+      <button class="btn btn-outline btn-sm" onclick="dismissLiveSummary()">✕ Dismiss</button>
+    </div>`;
+
+  // Insert after the severity section
+  const sevSection = document.getElementById('severitySection');
+  sevSection.appendChild(wrap);
+}
+
+function dismissLiveSummary() {
+  const el = document.getElementById('liveIncidentSummary');
+  if (el) el.remove();
+}
+
+function findEntryById(id) {
+  return assessmentLog.find(e => e.id === id);
+}
+
+function printIncidentSummary(entryId) {
+  const entry = findEntryById(entryId);
+  if (!entry) { alert('Incident not found.'); return; }
+
+  // Open new window with just the incident, suitable for printing/saving as PDF
+  const w = window.open('', '_blank', 'width=820,height=900');
+  const css = `
+    body { font-family: 'DM Sans', system-ui, sans-serif; padding: 30px; color: #1A1D23; max-width: 760px; margin: 0 auto; }
+    h1 { font-family: Georgia, serif; font-size: 22px; color: #7F1D1D; border-bottom: 3px solid #7F1D1D; padding-bottom: 8px; margin-bottom: 4px; }
+    .ref { font-family: 'Courier New', monospace; font-size: 12px; color: #6B7280; margin-bottom: 24px; }
+    .row { display: flex; padding: 7px 0; border-bottom: 1px solid #F3F4F6; font-size: 13px; }
+    .row .lbl { font-weight: 700; color: #6B7280; min-width: 180px; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.4px; padding-top: 2px; }
+    .row .val { flex: 1; line-height: 1.5; }
+    .footer { margin-top: 30px; padding-top: 14px; border-top: 1px solid #DFE3EA; font-size: 10.5px; color: #9CA3AF; text-align: center; }
+    .signoff { margin-top: 40px; display: flex; gap: 30px; }
+    .signoff > div { flex: 1; }
+    .signoff .line { border-bottom: 1px solid #1A1D23; height: 36px; }
+    .signoff .lbl { font-size: 11px; color: #6B7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+    @media print { body { padding: 16px; } }
+  `;
+  const harm = HARM_SCORES.find(h => h.id === entry.severity.harmScore);
+  const verdictText = entry.criteriaMet === true ? 'CRITERIA MET' :
+                      entry.criteriaMet === false ? 'CRITERIA NOT MET' : 'N/A';
+  const cs = entry.constitutionalStatus || {};
+  const constSummary = [cs.fever && 'Fever', cs.leukocytosis && 'Leukocytosis', cs.mentalStatus && 'Acute mental status change', cs.funcDecline && 'Acute functional decline'].filter(Boolean).join(', ') || 'None met';
+  const amOpt = ANTIMICROBIAL_OPTIONS.find(o => o.id === entry.severity.antimicrobials);
+  const path = entry.severity.pathology || {};
+  let pathText = path.collected === true ? 'YES' : path.collected === false ? 'NO' : 'Not recorded';
+  if (path.collected && path.result) pathText += ' — ' + escapeHtml(path.result);
+  const notifLabels = (entry.severity.notifications || []).map(id => NOTIFICATION_RECIPIENTS.find(r => r.id === id)?.label).filter(Boolean);
+  const ts = new Date(entry.timestamp);
+
+  const body = `
+    <h1>🚨 Infection Incident Summary</h1>
+    <div class="ref">Reference: ${entry.severity.incidentRef} · Generated: ${ts.toLocaleString('en-AU')}</div>
+    <div class="row"><span class="lbl">Resident</span><span class="val"><strong>${escapeHtml(entry.resident)}</strong>${entry.room ? ' · Room ' + escapeHtml(entry.room) : ''}</span></div>
+    <div class="row"><span class="lbl">Location</span><span class="val">${escapeHtml(entry.location || '—')}</span></div>
+    <div class="row"><span class="lbl">Assessment Date</span><span class="val">${escapeHtml(entry.date || '—')}</span></div>
+    <div class="row"><span class="lbl">Assessor</span><span class="val">${escapeHtml(entry.assessor || '—')}</span></div>
+    <div class="row"><span class="lbl">Infection Category</span><span class="val"><strong>${escapeHtml(entry.categoryLabel)}</strong> — ${escapeHtml(entry.subtypeLabel)}</span></div>
+    <div class="row"><span class="lbl">McGeer Verdict</span><span class="val">${verdictText}</span></div>
+    <div class="row"><span class="lbl">Constitutional Findings</span><span class="val">${constSummary}</span></div>
+    <div class="row"><span class="lbl">HARM Score</span><span class="val"><strong>${harm?.label || entry.severity.harmScore}</strong><br><span style="font-size:12px;color:#6B7280">${harm?.desc || ''}</span></span></div>
+    <div class="row"><span class="lbl">Hospitalised</span><span class="val">${entry.severity.hospitalised === true ? 'YES' : entry.severity.hospitalised === false ? 'NO' : 'Not recorded'}</span></div>
+    <div class="row"><span class="lbl">GP / Medical Review</span><span class="val">${entry.severity.gpReview === true ? 'YES' : entry.severity.gpReview === false ? 'NO' : 'Not recorded'}</span></div>
+    <div class="row"><span class="lbl">Antimicrobials</span><span class="val">${escapeHtml(amOpt ? amOpt.label : 'Not recorded')}</span></div>
+    <div class="row"><span class="lbl">Pathology</span><span class="val">${pathText}</span></div>
+    <div class="row"><span class="lbl">Notifications</span><span class="val">${escapeHtml(notifLabels.length ? notifLabels.join(', ') : 'None')}</span></div>
+    ${entry.severity.additionalInfo ? `<div class="row"><span class="lbl">Additional Info</span><span class="val" style="white-space:pre-wrap">${escapeHtml(entry.severity.additionalInfo)}</span></div>` : ''}
+    <div class="signoff">
+      <div><div class="line"></div><div class="lbl">Reported by (signature)</div></div>
+      <div><div class="line"></div><div class="lbl">Reviewed by (signature)</div></div>
+      <div><div class="line"></div><div class="lbl">Date</div></div>
+    </div>
+    <div class="footer">Reference: ${entry.severity.incidentRef} · McGeer Criteria + HARM Scoring Tool · IPC Surveillance Suite</div>
+  `;
+  w.document.write(`<!DOCTYPE html><html><head><title>${entry.severity.incidentRef} — Incident Summary</title><style>${css}</style></head><body>${body}<script>window.onload=()=>setTimeout(()=>window.print(),300);<\/script></body></html>`);
+  w.document.close();
+}
+
+function downloadIncidentSummary(entryId) {
+  const entry = findEntryById(entryId);
+  if (!entry) { alert('Incident not found.'); return; }
+  // Reuse the print HTML structure but as a downloadable file
+  const harm = HARM_SCORES.find(h => h.id === entry.severity.harmScore);
+  const verdictText = entry.criteriaMet === true ? 'CRITERIA MET' :
+                      entry.criteriaMet === false ? 'CRITERIA NOT MET' : 'N/A';
+  const cs = entry.constitutionalStatus || {};
+  const constSummary = [cs.fever && 'Fever', cs.leukocytosis && 'Leukocytosis', cs.mentalStatus && 'Acute mental status change', cs.funcDecline && 'Acute functional decline'].filter(Boolean).join(', ') || 'None met';
+  const amOpt = ANTIMICROBIAL_OPTIONS.find(o => o.id === entry.severity.antimicrobials);
+  const path = entry.severity.pathology || {};
+  let pathText = path.collected === true ? 'YES' : path.collected === false ? 'NO' : 'Not recorded';
+  if (path.collected && path.result) pathText += ' — ' + escapeHtml(path.result);
+  const notifLabels = (entry.severity.notifications || []).map(id => NOTIFICATION_RECIPIENTS.find(r => r.id === id)?.label).filter(Boolean);
+  const ts = new Date(entry.timestamp);
+
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${entry.severity.incidentRef} — Incident Summary</title>
+<style>
+  body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 30px; color: #1A1D23; max-width: 760px; margin: 0 auto; }
+  h1 { font-family: Georgia, serif; font-size: 22px; color: #7F1D1D; border-bottom: 3px solid #7F1D1D; padding-bottom: 8px; margin-bottom: 4px; }
+  .ref { font-family: 'Courier New', monospace; font-size: 12px; color: #6B7280; margin-bottom: 24px; }
+  .row { display: flex; padding: 7px 0; border-bottom: 1px solid #F3F4F6; font-size: 13px; }
+  .row .lbl { font-weight: 700; color: #6B7280; min-width: 180px; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.4px; padding-top: 2px; }
+  .row .val { flex: 1; line-height: 1.5; }
+  .footer { margin-top: 30px; padding-top: 14px; border-top: 1px solid #DFE3EA; font-size: 10.5px; color: #9CA3AF; text-align: center; }
+</style></head><body>
+<h1>🚨 Infection Incident Summary</h1>
+<div class="ref">Reference: ${entry.severity.incidentRef} · Generated: ${ts.toLocaleString('en-AU')}</div>
+<div class="row"><span class="lbl">Resident</span><span class="val"><strong>${escapeHtml(entry.resident)}</strong>${entry.room ? ' · Room ' + escapeHtml(entry.room) : ''}</span></div>
+<div class="row"><span class="lbl">Location</span><span class="val">${escapeHtml(entry.location || '—')}</span></div>
+<div class="row"><span class="lbl">Assessment Date</span><span class="val">${escapeHtml(entry.date || '—')}</span></div>
+<div class="row"><span class="lbl">Assessor</span><span class="val">${escapeHtml(entry.assessor || '—')}</span></div>
+<div class="row"><span class="lbl">Infection Category</span><span class="val"><strong>${escapeHtml(entry.categoryLabel)}</strong> — ${escapeHtml(entry.subtypeLabel)}</span></div>
+<div class="row"><span class="lbl">McGeer Verdict</span><span class="val">${verdictText}</span></div>
+<div class="row"><span class="lbl">Constitutional Findings</span><span class="val">${constSummary}</span></div>
+<div class="row"><span class="lbl">HARM Score</span><span class="val"><strong>${harm?.label || entry.severity.harmScore}</strong><br><span style="font-size:12px;color:#6B7280">${harm?.desc || ''}</span></span></div>
+<div class="row"><span class="lbl">Hospitalised</span><span class="val">${entry.severity.hospitalised === true ? 'YES' : entry.severity.hospitalised === false ? 'NO' : 'Not recorded'}</span></div>
+<div class="row"><span class="lbl">GP / Medical Review</span><span class="val">${entry.severity.gpReview === true ? 'YES' : entry.severity.gpReview === false ? 'NO' : 'Not recorded'}</span></div>
+<div class="row"><span class="lbl">Antimicrobials</span><span class="val">${escapeHtml(amOpt ? amOpt.label : 'Not recorded')}</span></div>
+<div class="row"><span class="lbl">Pathology</span><span class="val">${pathText}</span></div>
+<div class="row"><span class="lbl">Notifications</span><span class="val">${escapeHtml(notifLabels.length ? notifLabels.join(', ') : 'None')}</span></div>
+${entry.severity.additionalInfo ? `<div class="row"><span class="lbl">Additional Info</span><span class="val" style="white-space:pre-wrap">${escapeHtml(entry.severity.additionalInfo)}</span></div>` : ''}
+<div class="footer">Reference: ${entry.severity.incidentRef} · McGeer Criteria + HARM Scoring Tool · IPC Surveillance Suite</div>
+</body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${entry.severity.incidentRef}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function copyIncidentSummary(entryId) {
+  const entry = findEntryById(entryId);
+  if (!entry) { alert('Incident not found.'); return; }
+  const text = buildIncidentSummaryText(entry);
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Incident Summary copied to clipboard.\n\nYou can now paste it into RaiseIT, RiskMan, an email, or your facility incident system.');
+  }).catch(() => {
+    // Fallback: show in a prompt for manual copy
+    prompt('Copy the text below:', text);
+  });
+}
+
+function exportLog() {
+  if (assessmentLog.length === 0) { alert('No assessments to export.'); return; }
+  const headers = [
+    'Date','Resident','Room','Location','Category','SubType','CriteriaMet','Assessor',
+    'ConstitutionalFever','ConstitutionalLeukocytosis','ConstitutionalMentalStatus','ConstitutionalFuncDecline',
+    'HARMScore','Hospitalised','GPReview','Antimicrobials','PathologyCollected','PathologyResult',
+    'Notifications','Escalated','IncidentRef','AdditionalInfo','Notes'
+  ];
+  const rows = assessmentLog.map(e => {
+    const sev = e.severity || {};
+    const path = sev.pathology || {};
+    const notifLabels = (sev.notifications || [])
+      .map(id => NOTIFICATION_RECIPIENTS.find(r => r.id === id)?.label)
+      .filter(Boolean)
+      .join('; ');
+    return [
+      e.date || '', e.resident, e.room, e.location, e.categoryLabel, e.subtypeLabel,
+      e.criteriaMet === true ? 'Yes' : e.criteriaMet === false ? 'No' : 'N/A',
+      e.assessor,
+      e.constitutionalStatus?.fever ? 'Y' : 'N',
+      e.constitutionalStatus?.leukocytosis ? 'Y' : 'N',
+      e.constitutionalStatus?.mentalStatus ? 'Y' : 'N',
+      e.constitutionalStatus?.funcDecline ? 'Y' : 'N',
+      sev.harmScore || '',
+      sev.hospitalised === true ? 'Y' : sev.hospitalised === false ? 'N' : '',
+      sev.gpReview === true ? 'Y' : sev.gpReview === false ? 'N' : '',
+      sev.antimicrobials || '',
+      path.collected === true ? 'Y' : path.collected === false ? 'N' : '',
+      path.result || '',
+      notifLabels,
+      sev.escalated ? 'Y' : 'N',
+      sev.incidentRef || '',
+      sev.additionalInfo || '',
+      e.otherNotes || '',
+    ];
+  });
+  let csv = headers.join(',') + '\n';
+  rows.forEach(r => { csv += r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n'; });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'mcgeer-assessments-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER: CRITERIA GUIDE
+   ═══════════════════════════════════════════════════════════════ */
+function renderGuide() {
+  const el = document.getElementById('guideContent');
+  let html = '';
+
+  // Constitutional
+  html += `<div class="guide-cat">
+    <div class="guide-cat-header" style="background:var(--const-bg);color:var(--const)">🌡️ Constitutional Criteria (Table 1)</div>
+    <div class="guide-cat-body">`;
+  CONSTITUTIONAL.forEach(c => {
+    html += `<div class="guide-syndrome"><h4>${c.label}</h4><p style="font-size:11px;color:var(--muted);margin-bottom:4px">${c.rule}</p><ul>`;
+    c.items.forEach(i => { html += `<li>${i.text}</li>`; });
+    html += '</ul></div>';
+  });
+  html += '</div></div>';
+
+  // Each category
+  CATEGORIES.filter(c => c.id !== 'other').forEach(cat => {
+    html += `<div class="guide-cat">
+      <div class="guide-cat-header" style="background:${cat.bg};color:${cat.color}">${cat.icon} ${cat.full}</div>
+      <div class="guide-cat-body">`;
+    cat.subtypes.forEach(sub => {
+      html += `<div class="guide-syndrome"><h4>${sub.label}</h4>`;
+      html += `<p><strong>Rule:</strong> ${sub.rule}</p>`;
+      sub.sections.forEach(sec => {
+        html += `<p style="margin-top:6px;font-weight:600;font-size:12px">${sec.title}</p><ul>`;
+        sec.groups.forEach(grp => {
+          grp.items.forEach(item => { html += `<li>${item.text}</li>`; });
+        });
+        html += '</ul>';
+      });
+      if (sub.comments) html += `<p style="margin-top:6px;font-size:11px;color:var(--muted);font-style:italic">💡 ${sub.comments}</p>`;
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+
+  // HARM Scoring reference
+  html += `<div class="guide-cat">
+    <div class="guide-cat-header" style="background:#FEF2F2;color:#7F1D1D">⚖️ HARM Scoring Reference</div>
+    <div class="guide-cat-body">
+      <div class="guide-syndrome" style="background:#FFFBEB;border-color:#FDE68A">
+        <h4>Purpose</h4>
+        <p>The HARM score is <strong>independent</strong> of the McGeer surveillance verdict. It captures the clinician's judgement of how serious this episode is for this resident, and routes the assessment to the appropriate downstream pathway.</p>
+        <p style="margin-top:6px"><strong>Two different questions:</strong></p>
+        <ul>
+          <li><strong>McGeer asks:</strong> "Does this episode meet surveillance criteria for an infection?" (retrospective classification)</li>
+          <li><strong>HARM asks:</strong> "How serious is this episode, and what does it require us to do?" (clinical risk grading)</li>
+        </ul>
+        <p style="margin-top:6px">A "criteria not met" surveillance result can still warrant a high HARM score if the clinician judges the resident is significantly unwell. A "criteria met" result can be HS4/HS5 if the resident is essentially asymptomatic.</p>
+      </div>`;
+  HARM_SCORES.forEach(h => {
+    const escalating = ESCALATION_THRESHOLD.includes(h.id);
+    html += `<div class="guide-syndrome" style="border-left:4px solid currentColor;color:inherit">
+      <h4><span class="harm-badge ${h.cls}">${h.id}</span> ${h.label.replace(h.id + ' — ', '')} ${escalating ? '<span class="harm-tag escalate" style="margin-left:6px">ESCALATE</span>' : ''}</h4>
+      <p>${h.desc}</p>
+      <p style="margin-top:4px;font-size:11px;font-style:italic;color:var(--muted)">→ ${h.action}</p>
+    </div>`;
+  });
+  html += `<div class="guide-syndrome">
+    <h4>Escalation Threshold (configurable)</h4>
+    <p>Currently configured: scores <strong>${ESCALATION_THRESHOLD.join(' and ')}</strong> trigger automatic generation of an Infection Incident Summary with a unique reference number.</p>
+    <p style="margin-top:6px;font-size:11px;color:var(--muted)">The incident summary is suitable for printing, downloading as HTML, or copying as plain text into your facility's incident management system (RaiseIT, RiskMan, paper-based, etc.). The IPC Surveillance Suite remains the surveillance and severity layer — downstream incident management is whatever your facility already uses.</p>
+  </div>`;
+  html += `</div></div>`;
+
+  el.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LOCATIONS: SYNC + FALLBACK
+   ═══════════════════════════════════════════════════════════════ */
+function loadLocations() {
+  const locSelect = document.getElementById('resLocation');
+  const banner = document.getElementById('syncBanner');
+  let units = [];
+  let synced = false;
+
+  // Try Dashboard sync via localStorage
+  try {
+    const dashData = localStorage.getItem('ipc-surveillance-data-v2');
+    if (dashData) {
+      const parsed = JSON.parse(dashData);
+      if (parsed.facility && parsed.facility.buildings) {
+        parsed.facility.buildings.forEach(b => {
+          (b.floors || []).forEach(f => {
+            (f.units || []).forEach(u => {
+              units.push({ name: u.name, path: `${b.name} → ${f.name} → ${u.name}` });
+            });
+          });
+        });
+        if (units.length > 0) synced = true;
+      }
+    }
+  } catch(e) {}
+
+  // Fallback to local units
+  if (!synced && fallbackUnits.length > 0) {
+    units = fallbackUnits.map(u => ({ name: u, path: u }));
+  }
+
+  // Populate select
+  let opts = '<option value="">— Select unit —</option>';
+  units.forEach(u => { opts += `<option value="${u.path}">${u.path}</option>`; });
+  locSelect.innerHTML = opts;
+
+  // Banner
+  if (synced) {
+    banner.innerHTML = `<div class="sync-banner ok">✅ <strong>Synced with Dashboard</strong> — ${units.length} unit(s) loaded automatically.</div>`;
+  } else if (fallbackUnits.length > 0) {
+    banner.innerHTML = `<div class="sync-banner fallback">⚠️ <strong>Using fallback locations</strong> — ${fallbackUnits.length} unit(s). Set up the Dashboard for automatic sync.</div>`;
+  } else {
+    banner.innerHTML = `<div class="sync-banner fallback">ℹ️ No locations found. Set up the <strong>Dashboard</strong> or add units in the <strong>📍 Locations</strong> tab.</div>`;
+  }
+}
+
+function renderLocations() {
+  const el = document.getElementById('locSetup');
+  if (fallbackUnits.length === 0) {
+    el.innerHTML = '<p style="font-size:12px;color:var(--muted)">No fallback units configured. Click "+ Add Unit" below.</p>';
+    return;
+  }
+  let html = '';
+  fallbackUnits.forEach((u, i) => {
+    html += `<div class="loc-unit-row">
+      <span style="flex:1">${u}</span>
+      <button class="btn btn-danger btn-sm" onclick="removeFallbackUnit(${i})">✕</button>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function addFallbackUnit() {
+  const name = prompt('Enter unit name (e.g. "Main Building — Ground Floor — Banksia Wing"):');
+  if (!name || !name.trim()) return;
+  fallbackUnits.push(name.trim());
+  localStorage.setItem('mcgeer-fallback-units', JSON.stringify(fallbackUnits));
+  renderLocations();
+  loadLocations();
+}
+
+function removeFallbackUnit(idx) {
+  fallbackUnits.splice(idx, 1);
+  localStorage.setItem('mcgeer-fallback-units', JSON.stringify(fallbackUnits));
+  renderLocations();
+  loadLocations();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INITIALISE
+   ═══════════════════════════════════════════════════════════════ */
+function init() {
+  // Set today's date
+  document.getElementById('resDate').value = new Date().toISOString().slice(0,10);
+  loadLocations();
+  renderConstitutional();
+  renderCategoryGrid();
+  renderSeverity();
+  updateSaveValidation();
+}
+
+init();
+</script>
+</body>
+</html>
