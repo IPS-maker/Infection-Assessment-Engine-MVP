@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infection Assessment Engine | Aged Care 2025 Compliance</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --bg: #f8f9fa;
+        }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg); color: var(--primary); margin: 0; padding: 20px; }
+       .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        h1 { border-bottom: 3px solid var(--accent); padding-bottom: 10px; font-size: 1.8rem; }
+       .section { margin-bottom: 25px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+       .badge { background: var(--accent); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; vertical-align: middle; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; margin-top: 10px; }
+        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+       .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+       .checkbox-item { background: #fdfdfd; border: 1px solid #eee; padding: 10px; border-radius: 6px; display: flex; align-items: center; }
+       .checkbox-item input { margin-right: 12px; transform: scale(1.2); }
+        button { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 1.1rem; font-weight: bold; margin-top: 20px; transition: 0.3s; }
+        button:hover { background: #1a252f; }
+        #results { margin-top: 30px; padding: 20px; border-radius: 8px; display: none; border: 2px solid transparent; }
+       .met { background: #e8f5e9; border-color: #27ae60; color: #1b5e20; }
+       .suspected { background: #fffde7; border-color: #fbc02d; color: #f57f17; }
+        #sbar-box { background: #f1f8ff; padding: 15px; border-radius: 6px; border-left: 5px solid var(--accent); margin-top: 20px; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Infection Assessment Engine <span class="badge">Compliance 2025</span></h1>
+    
+    <div class="section">
+        <label>Resident ID or Initials (Required for AppSheet Link)</label>
+        <input type="text" id="res_id" placeholder="e.g. JB-104" required>
+        
+        <label>Assessing Worker Name</label>
+        <input type="text" id="staff_name" placeholder="Your Name">
+    </div>
+
+    <div class="section">
+        <h3>1. Constitutional Signs <span class="badge">McGeer Table 2</span></h3>
+        <label>Current Temperature (°C)</label>
+        <input type="number" id="temp" step="0.1" placeholder="37.5">
+        
+        <div class="checkbox-grid">
+            <div class="checkbox-item"><input type="checkbox" id="temp_rise"> <label>Temp >1.1°C over baseline</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="mental_change"> <label>Acute mental status change</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="adl_decline"> <label>Acute functional decline (3pt ADL)</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="leukocytosis"> <label>Leukocytosis (>14k cells/mm³)</label></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>2. Suspected Site</h3>
+        <select id="inf_type" onchange="updateUI()">
+            <option value="">-- Choose Category --</option>
+            <option value="uti">Urinary (No Catheter)</option>
+            <option value="resp">Respiratory (LRTI)</option>
+            <option value="skin">Skin / Soft Tissue</option>
+            <option value="gi">Gastrointestinal</option>
+        </select>
+    </div>
+
+    <div id="sym_uti" class="section" style="display:none;">
+        <h3>Localized Urinary Symptoms</h3>
+        <div class="checkbox-grid">
+            <div class="checkbox-item"><input type="checkbox" class="uti-sym" id="uti_dysuria"> <label>Acute Dysuria</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="uti-sym"> <label>Suprapubic Pain</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="uti-sym"> <label>Gross Hematuria</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="uti-sym"> <label>New/Inc Incontinence</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="uti-sym"> <label>New/Inc Urgency</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="uti-sym"> <label>New/Inc Frequency</label></div>
+        </div>
+    </div>
+
+    <div id="sym_resp" class="section" style="display:none;">
+        <h3>Respiratory Symptoms</h3>
+        <div class="checkbox-grid">
+            <div class="checkbox-item"><input type="checkbox" class="resp-sym"> <label>New/Inc Cough</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="resp-sym"> <label>Inc Sputum Production</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="resp-sym"> <label>O2 Sat <94% or >3% drop</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="resp-sym"> <label>Resp Rate >= 25</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="resp-sym"> <label>Pleuritic Chest Pain</label></div>
+        </div>
+    </div>
+
+    <div id="sym_skin" class="section" style="display:none;">
+        <h3>Skin/Soft Tissue Symptoms</h3>
+        <div class="checkbox-grid">
+            <div class="checkbox-item"><input type="checkbox" class="skin-sym" id="skin_pus"> <label>Pus at affected site</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="skin-sym"> <label>New Heat at site</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="skin-sym"> <label>New Redness</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="skin-sym"> <label>New Swelling</label></div>
+            <div class="checkbox-item"><input type="checkbox" class="skin-sym"> <label>New Tenderness/Pain</label></div>
+        </div>
+    </div>
+
+    <button onclick="runMcGeerLogic()">Assess and Submit to Surveillance</button>
+
+    <div id="results">
+        <h2 id="res_title"></h2>
+        <p id="res_msg"></p>
+        <div id="sbar-box"></div>
+    </div>
+</div>
+
+<script>
+    // --- CONFIGURATION: PASTE YOUR GOOGLE WEB APP URL BELOW ---
+    const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+
+    function updateUI() {
+        const type = document.getElementById('inf_type').value;
+        ['uti', 'resp', 'skin'].forEach(s => document.getElementById('sym_' + s).style.display = (type === s? 'block' : 'none'));
+    }
+
+    function runMcGeerLogic() {
+        const resId = document.getElementById('res_id').value;
+        if(!resId) { alert("Please enter Resident ID"); return; }
+
+        const temp = parseFloat(document.getElementById('temp').value) |
+
+| 0;
+        const hasConstitutional = (temp > 37.8) |
+
+| document.getElementById('temp_rise').checked |
+| 
+                                  document.getElementById('mental_change').checked |
+
+| 
+                                  document.getElementById('adl_decline').checked ||
+                                  document.getElementById('leukocytosis').checked;
+
+        const type = document.getElementById('inf_type').value;
+        let isMcGeer = false;
+        let isSuspected = false;
+        let rationale = "";
+
+        // logic based on McGeer 2012 Definitions
+        if (type === 'uti') {
+            const dysuria = document.getElementById('uti_dysuria').checked;
+            const localCount = document.querySelectorAll('.uti-sym:checked').length;
+            if (dysuria) { isMcGeer = true; rationale = "Acute Dysuria (Primary Criterion met)"; }
+            else if (hasConstitutional && localCount >= 1) { isMcGeer = true; rationale = "Constitutional + 1 localized symptom"; }
+            else if (localCount >= 2) { isMcGeer = true; rationale = "2 localized symptoms met"; }
+            else if (localCount >= 1) { isSuspected = true; rationale = "Clinical symptoms present (Suspected)"; }
+        } 
+        else if (type === 'resp') {
+            const respCount = document.querySelectorAll('.resp-sym:checked').length;
+            if (respCount >= 2 && hasConstitutional) { isMcGeer = true; rationale = "2 Respiratory signs + 1 Constitutional sign"; }
+            else if (respCount >= 1) { isSuspected = true; rationale = "Suspected LRTI - Monitor vitals"; }
+        }
+        else if (type === 'skin') {
+            const hasPus = document.getElementById('skin_pus').checked;
+            const skinCount = document.querySelectorAll('.skin-sym:checked').length;
+            if (hasPus) { isMcGeer = true; rationale = "Pus present at site (Confirmed SSTI)"; }
+            else if (skinCount >= 4 |
+
+| (skinCount >= 1 && hasConstitutional)) { isMcGeer = true; rationale = "Localized signs + Constitutional criteria met"; }
+        }
+
+        const decision = isMcGeer? "McGeer Met (Confirmed)" : (isSuspected? "Suspected (Clinical)" : "No Criteria Met");
+        showResults(decision, rationale);
+        submitToSheet(resId, type, decision, rationale);
+    }
+
+    function showResults(decision, rationale) {
+        const resDiv = document.getElementById('results');
+        resDiv.style.display = 'block';
+        resDiv.className = decision.includes("Met")? "met" : (decision.includes("Suspected")? "suspected" : "");
+        document.getElementById('res_title').innerText = decision;
+        document.getElementById('res_msg').innerText = "Rationale: " + rationale;
+        
+        // SBAR Generation
+        const sbar = `SITUATION: Resident ${document.getElementById('res_id').value} is exhibiting signs of ${document.getElementById('inf_type').value.toUpperCase()}.\nBACKGROUND: Current temp is ${document.getElementById('temp').value}°C. Assessment identifies ${rationale}.\nASSESSMENT: I believe this requires GP review for possible antibiotic initiation.\nRECOMMENDATION: Requesting medical assessment and potential microbiology / labs.`;
+        document.getElementById('sbar-box').innerText = "SBAR CALL SCRIPT:\n\n" + sbar;
+    }
+
+    function submitToSheet(id, type, decision, rationale) {
+        if (SCRIPT_URL.includes('YOUR_GOOGLE')) return; // Don't submit if URL isn't set
+
+        const formData = new URLSearchParams();
+        formData.append('ResidentID', id);
+        formData.append('InfectionType', type);
+        formData.append('Decision', decision);
+        formData.append('Rationale', rationale);
+        formData.append('Worker', document.getElementById('staff_name').value);
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', // standard for Apps Script web apps
+            body: formData
+        }).then(() => console.log('Surveillance log sent to Google Sheets.'));
+    }
+</script>
+
+</body>
+</html>
