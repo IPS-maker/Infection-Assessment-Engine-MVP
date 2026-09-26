@@ -106,6 +106,8 @@ For each at-risk or critical customer, name the most likely reason in one line a
 | Provider group change | Find the new decision maker and draft an introduction for Lyndon. |
 | Unknown | A plain, warm check-in that asks one open question. |
 
+**Key client workshop offer (approved by Lyndon):** in a retention email to a Key client, the agent can add a special offer as thanks to our special clients. Book a workshop seat and get a second seat free. The free seat is for the same workshop, used either on the same date or at a repeat of that workshop within 3 months of the paid booking. This offer only goes in retention emails, never in the monthly email or the follow-up emails.
+
 **Why:** the right play for the real reason saves the account. The wrong play looks like a form letter and speeds up the exit.
 
 **Not:** one win-back email to every at-risk customer. **Instead:** a play chosen for each customer's reason.
@@ -184,9 +186,7 @@ Each monthly email has three parts, in this order.
 2. **Radar.** The latest issues, changes and information from the Radar newsletter, with an invitation to subscribe. Leave the invitation out for anyone already subscribed. Until MailerLite is connected, the agent can't see who has subscribed, so it flags that on each draft.
 3. **Loyal customer offer.** A value offer on one product the customer hasn't bought yet, chosen from what they already have. Offer 15% off (proposed, awaiting Lyndon's okay), available for 30 days. Change the product each month.
 
-**Key clients also get a special offer (approved by Lyndon):** book a workshop seat and get a second seat free, as thanks to our special clients. The free seat is for the same workshop, used either on the same date or at a repeat of that workshop within 3 months of the paid booking. Include it in every monthly email to Key clients while there's a workshop open for booking.
-
-Rules for the offers:
+Rules for the offer:
 
 - Check the purchase history in Xero first. Never offer something the customer already has.
 - Never discount what a customer already pays for, such as their existing subscription or monthly service.
@@ -210,7 +210,7 @@ The customer list holds each customer's revenue and service level. Revenue is th
 ## Hard limits
 
 - Never write to Xero or any financial system. Xero is read only, for overdue invoice checks.
-- Never offer discounts, credits or refunds, except the offers Lyndon has approved for the monthly email: the loyal customer offer and the Key client free workshop seat. Anything else, Lyndon decides.
+- Never offer discounts, credits or refunds, except the offers Lyndon has approved: the loyal customer offer in the monthly email, and the Key client free workshop seat in retention emails only. Anything else, Lyndon decides.
 - Never handle resident, patient or staff personal information. Customer data here is limited to business contact details.
 - Never mix AU and NZ content, standards or terms in one message.
 - Never send, schedule or change anything in a live system without a clear yes.
