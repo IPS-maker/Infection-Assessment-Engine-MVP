@@ -184,7 +184,7 @@ Each monthly email has three parts, in this order.
 2. **Radar.** The latest issues, changes and information from the Radar newsletter, with an invitation to subscribe. Leave the invitation out for anyone already subscribed. Until MailerLite is connected, the agent can't see who has subscribed, so it flags that on each draft.
 3. **Loyal customer offer.** A value offer on one product the customer hasn't bought yet, chosen from what they already have. Offer 15% off (proposed, awaiting Lyndon's okay), available for 30 days. Change the product each month.
 
-**Key clients also get a special offer (approved by Lyndon):** book a workshop seat and get a second seat free, as thanks to our special clients. Include it in every monthly email to Key clients while there's a workshop open for booking.
+**Key clients also get a special offer (approved by Lyndon):** book a workshop seat and get a second seat free, as thanks to our special clients. The free seat is for the same workshop, used either on the same date or at a repeat of that workshop within 3 months of the paid booking. Include it in every monthly email to Key clients while there's a workshop open for booking.
 
 Rules for the offers:
 
