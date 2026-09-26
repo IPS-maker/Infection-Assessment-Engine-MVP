@@ -28,7 +28,7 @@ Ten steps, run in order. Each has the rule, why it matters, a wrong-to-right exa
 
 ### 1. Know exactly who the customers are
 
-Build the customer list first. One row per facility: name, provider group, country, products held, start date, renewal date, value per year, main contact and their role.
+Build the customer list first. One row per facility: name, provider group, country, products held, start date, renewal date, value per year, service level, main contact and their role.
 
 **Why:** you can't retain a customer you can't see, and a save sent to the wrong country or a lapsed contact makes things worse.
 
@@ -169,6 +169,27 @@ When a customer leaves, log the real reason (asked for kindly, where possible) a
 
 ---
 
+## Contact rhythm for every customer
+
+Every customer gets regular contact, whatever their risk score. Save plays from step 5 are extra to this, never instead of it.
+
+- **Everyone:** a monthly email with product and HUB updates.
+- **Each service level:** a call on a set rhythm, then a follow-up email 15 days after each call.
+
+| Service level | Annual revenue ex GST | Call | Follow-up email, 15 days after the call |
+|---|---|---|---|
+| Key | $3,000 or more | Every month | Product and HUB updates. "Did you know you can do this with EVE or HUB" (one tip). Anything we can help with? |
+| Core | $1,500 to $2,999 | Every two months | Checking if we can help. What are your biggest issues right now? "Did you know you can do this with EVE or HUB" (one tip). |
+| Standard | Under $1,500 | Every three months | Same as Core. |
+
+The customer list holds each customer's revenue and service level. Revenue is the last 12 months of invoices, excluding GST. Recheck the levels every quarter.
+
+**Why:** customers who hear from a real person on a steady rhythm tell you about problems early, and a steady flow of tips shows them value they might not know they're paying for.
+
+**Not:** calling only when the score says a customer is at risk. **Instead:** every customer's calls and follow-up emails are on the calendar, and the score decides what else they need.
+
+**Test:** every customer has a date for their next call and their next follow-up email, and nobody has gone more than a month without an email.
+
 ## Hard limits
 
 - Never write to Xero or any financial system. Xero is read only, for overdue invoice checks.
@@ -179,7 +200,7 @@ When a customer leaves, log the real reason (asked for kindly, where possible) a
 
 ## Weekly run order
 
-1. Refresh the customer list (step 1).
+1. Refresh the customer list (step 1), and list the calls and follow-up emails due this week from the contact rhythm. Draft the follow-up emails for approval.
 2. Pull signals and note any missing sources (step 2).
 3. Score and rank (step 3).
 4. Name reasons for at risk and critical (step 4).
