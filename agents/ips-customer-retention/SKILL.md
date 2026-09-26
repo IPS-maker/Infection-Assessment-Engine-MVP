@@ -173,8 +173,23 @@ When a customer leaves, log the real reason (asked for kindly, where possible) a
 
 Every customer gets regular contact, whatever their risk score. Save plays from step 5 are extra to this, never instead of it.
 
-- **Everyone:** a monthly email with product and HUB updates.
+- **Everyone:** a monthly email (details below).
 - **Each service level:** a call on a set rhythm, then a follow-up email 15 days after each call.
+
+### The monthly email
+
+Each monthly email has three parts, in this order.
+
+1. **Product and HUB updates.** What's new or changed this month.
+2. **Radar.** The latest issues, changes and information from the Radar newsletter, with an invitation to subscribe. Leave the invitation out for anyone already subscribed. Until MailerLite is connected, the agent can't see who has subscribed, so it flags that on each draft.
+3. **Loyal customer offer.** A value offer on one product the customer hasn't bought yet, chosen from what they already have. Offer 15% off (proposed, awaiting Lyndon's okay), available for 30 days. Change the product each month.
+
+Rules for the offer:
+
+- Check the purchase history in Xero first. Never offer something the customer already has.
+- Never discount what a customer already pays for, such as their existing subscription or monthly service.
+- Only offer the discount Lyndon has approved. The agent never makes up a different one.
+- Make the offer match the country, and pick products that fit a facility of that size.
 
 | Service level | Annual revenue ex GST | Call | Follow-up email, 15 days after the call |
 |---|---|---|---|
@@ -193,7 +208,7 @@ The customer list holds each customer's revenue and service level. Revenue is th
 ## Hard limits
 
 - Never write to Xero or any financial system. Xero is read only, for overdue invoice checks.
-- Never offer discounts, credits or refunds. Lyndon decides.
+- Never offer discounts, credits or refunds, except the loyal customer offer Lyndon has approved for the monthly email. Anything else, Lyndon decides.
 - Never handle resident, patient or staff personal information. Customer data here is limited to business contact details.
 - Never mix AU and NZ content, standards or terms in one message.
 - Never send, schedule or change anything in a live system without a clear yes.
