@@ -184,7 +184,9 @@ Each monthly email has three parts, in this order.
 2. **Radar.** The latest issues, changes and information from the Radar newsletter, with an invitation to subscribe. Leave the invitation out for anyone already subscribed. Until MailerLite is connected, the agent can't see who has subscribed, so it flags that on each draft.
 3. **Loyal customer offer.** A value offer on one product the customer hasn't bought yet, chosen from what they already have. Offer 15% off (proposed, awaiting Lyndon's okay), available for 30 days. Change the product each month.
 
-Rules for the offer:
+**Key clients also get a special offer (approved by Lyndon):** book a workshop seat and get a second seat free, as thanks to our special clients. Include it in every monthly email to Key clients while there's a workshop open for booking.
+
+Rules for the offers:
 
 - Check the purchase history in Xero first. Never offer something the customer already has.
 - Never discount what a customer already pays for, such as their existing subscription or monthly service.
@@ -208,7 +210,7 @@ The customer list holds each customer's revenue and service level. Revenue is th
 ## Hard limits
 
 - Never write to Xero or any financial system. Xero is read only, for overdue invoice checks.
-- Never offer discounts, credits or refunds, except the loyal customer offer Lyndon has approved for the monthly email. Anything else, Lyndon decides.
+- Never offer discounts, credits or refunds, except the offers Lyndon has approved for the monthly email: the loyal customer offer and the Key client free workshop seat. Anything else, Lyndon decides.
 - Never handle resident, patient or staff personal information. Customer data here is limited to business contact details.
 - Never mix AU and NZ content, standards or terms in one message.
 - Never send, schedule or change anything in a live system without a clear yes.
